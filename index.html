@@ -93,6 +93,8 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
 .dose{display:inline-flex;gap:4px;margin-top:4px;}
 .dose button.on{background:var(--navy);color:#fff;}
 @media (max-width:980px){.cols2{grid-template-columns:1fr;}}
+#printArea{display:none;}
+@media print{ body>*:not(#printArea){display:none !important;} #printArea{display:block;white-space:pre-wrap;font-family:"Yu Gothic","Meiryo",sans-serif;font-size:11pt;line-height:1.6;} }
 @media (max-width:600px){
   .tabs{padding:8px 8px 0;} .tab{flex:1;font-size:13px;padding:8px 6px;}
   .fgrid{grid-template-columns:1fr 1fr;}
@@ -270,7 +272,6 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
       <h3>経腸栄養</h3>
       <div class="fgrid">
         <label>投与方法<select id="e_route"><option value="ng">経管（経鼻胃管）</option><option value="peg">経管（胃瘻：半固形も可）</option><option value="oral">経口</option></select></label>
-        <label>白湯・フラッシュ（mL/日）<input type="number" id="e_flush" min="0" step="10" value="0"></label>
       </div>
       <div class="addbar" style="margin-top:6px"><select id="enSel"></select><input type="number" id="enQty" value="1" min="0" step="0.5"><span>個</span><button class="primary" id="enAdd">追加</button></div>
       <table class="lst"><tbody id="enRows"></tbody></table>
@@ -323,6 +324,23 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
       ・食品（流動食・栄養補助食品）は薬価収載品ではありません。入院中は食事（入院時食事療養）として扱います。
     </div>
   </details>
+</section>
+<section style="grid-column:1/-1" id="secStep">
+  <h2>6．経腸栄養のステップアップ表（目安）</h2>
+  <div class="fgrid">
+    <label>開始速度（mL/時）<input type="number" id="s_start" min="5" step="5" value="20"></label>
+    <label>1日ごとに増やす速度（mL/時）<input type="number" id="s_inc" min="0" step="5" value="20"></label>
+    <label>1日の投与時間（時間）<input type="number" id="s_hours" min="1" max="24" step="1" value="20"></label>
+    <label>最大速度（mL/時）<input type="number" id="s_max" min="10" step="10" value="100"></label>
+  </div>
+  <div id="stepBox" style="margin-top:8px"></div>
+</section>
+
+<section style="grid-column:1/-1">
+  <h2>7．モニタリング項目と記録</h2>
+  <div id="monBox"></div>
+  <div class="examples" style="margin-top:8px"><button class="primary" id="btnCopy">評価結果をコピー（カルテ・NST記録用）</button><button id="btnPrint">印刷</button><span id="copyMsg" class="note"></span></div>
+  <textarea id="copyArea" readonly style="display:none;width:100%;height:220px;margin-top:6px;font-size:13px"></textarea>
 </section>
 </main>
 
@@ -650,6 +668,7 @@ const ENTERAL=[
  {id:'twin',osm:595,cat:'drug',name:'ツインラインNF配合経腸用液',pkg:400,unit:'mL',kcal:400,pro:16.2,fat:11.12,cho:58.72,water:340,na:276,k:470,p:212,form:'liquid',tag:'消化態（A液＋B液）'},
  {id:'elental',osm:760,cat:'drug',name:'エレンタール配合内用剤',pkg:80,unit:'g',kcal:300,pro:13.14,fat:0.51,cho:63.41,water:0,dil:250,na:260,k:217.6,p:121.6,form:'powder',tag:'成分栄養剤（脂肪ほぼなし）'},
  {id:'aminoEN',osm:640,cat:'drug',name:'アミノレバンEN配合散',pkg:50,unit:'g',kcal:213,pro:13.5,fat:3.7,cho:31.5,water:0,dil:180,na:38.98,k:212.1,p:92.41,form:'powder',tag:'肝不全用（BCAA高含有）'},
+ {id:'solitaT',grp:'water',cat:'drug',name:'ソリタ−T配合顆粒3号',pkg:4,unit:'g',kcal:13,pro:0,fat:0,cho:3.2,water:0,dil:100,na:80.5,k:78.2,p:15.5,form:'powder',tag:'内服用電解質剤（1包を水100mLに溶解：Na35・K20mEq/L）'},
  {id:'czhi',osm:300,cat:'food',name:'CZ-Hi',pkg:200,unit:'mL',kcal:200,pro:10.0,fat:4.4,cho:34.2,water:168,na:180,k:300,p:150,form:'liquid',tag:'標準 1.0kcal/mL'},
  {id:'mar2',osm:620,cat:'food',name:'MA-R2.0',pkg:200,unit:'mL',kcal:400,pro:14.6,fat:11.2,cho:63.2,water:139,na:300,k:320,p:200,form:'liquid',tag:'高濃度 2.0kcal/mL'},
  {id:'renLP',osm:720,cat:'food',name:'明治リーナレンLP',pkg:125,unit:'mL',kcal:200,pro:2.0,fat:5.6,cho:36.6,water:94.8,na:60,k:60,p:40,form:'liquid',tag:'腎不全用・低たんぱく 1.6kcal/mL'},
@@ -657,12 +676,13 @@ const ENTERAL=[
  {id:'glurex',osm:560,cat:'food',name:'グルセルナ-REX',pkg:200,unit:'mL',kcal:200,pro:8.4,fat:11.1,cho:19.4,water:170,na:188,k:200,p:130,form:'liquid',tag:'糖尿病用（糖質控えめ）'},
  {id:'pg300',cat:'food',name:'PGソフトEJ300',pkg:200,unit:'g',kcal:300,pro:12.0,fat:6.6,cho:48.2,water:131,na:408,k:387,p:225,form:'semi',tag:'半固形（胃瘻）1.5kcal/g'},
  {id:'pg400',cat:'food',name:'PGソフトEJ400',pkg:267,unit:'g',kcal:400,pro:16.0,fat:8.8,cho:64.2,water:175,na:544,k:516,p:300,form:'semi',tag:'半固形（胃瘻）1.5kcal/g'},
+ {id:'water',grp:'water',cat:'water',name:'白湯',pkg:100,unit:'mL',kcal:0,pro:0,fat:0,cho:0,water:100,na:0,k:0,p:0,form:'water',tag:'水分補給・フラッシュ'},
  {id:'agal',cat:'sup',name:'ソフトアガロリー',pkg:83,unit:'g',kcal:150,pro:0,fat:0,cho:37.5,water:45.3,na:0,k:6,p:1,form:'jelly',tag:'経口・たんぱく0（腎不全のエネルギー補給）'},
  {id:'isojel',cat:'sup',name:'アイソカルゼリー ハイカロリー',pkg:66,unit:'g',kcal:150,pro:3.0,fat:7.9,cho:16.8,water:38,na:59,k:20,p:28,form:'jelly',tag:'経口・えん下困難者用'},
  {id:'procca',cat:'sup',name:'プロッカZn',pkg:77,unit:'g',kcal:80,pro:6.2,fat:0,cho:13.8,water:57.7,na:35,k:11,p:0,form:'jelly',tag:'経口・たんぱく・亜鉛補給'},
 ];
 const enBy=Object.fromEntries(ENTERAL.map(d=>[d.id,d]));
-const CAT={drug:'医薬品',food:'食品',sup:'補助食品'};
+const CAT={drug:'医薬品',food:'食品',sup:'補助食品',water:'水分'};
 const ROUTE_OK={ng:['liquid','powder'],peg:['liquid','powder','semi'],oral:['liquid','powder','jelly']};
 let erows=[];
 
@@ -670,7 +690,7 @@ function enTotals(items,flush,pn){ // items: [{id,qty,dil}]
   const t={kcal:0,pro:0,fat:0,cho:0,water:0,na:0,k:0,p:0,vol:0,drugKcal:0,foodKcal:0,n:0};
   items.forEach(r=>{const d=enBy[r.id], q=r.qty; t.kcal+=d.kcal*q; t.pro+=d.pro*q; t.fat+=d.fat*q; t.cho+=d.cho*q;
     const w=d.form==='powder'? (r.dil!=null?r.dil:d.dil) : d.water; t.water+=w*q; t.na+=d.na*q; t.k+=d.k*q; t.p+=d.p*q;
-    t.vol+= (d.form==='powder'? (d.id==='elental'?(r.dil+50):(r.dil+20)) : (d.unit==='mL'?d.pkg:0))*q;
+    t.vol+= (d.form==='water'?0: d.form==='powder'? (r.dil+(d.id==='elental'?50:d.id==='aminoEN'?20:0)) : (d.unit==='mL'?d.pkg:0))*q;
     if(d.cat==='drug') t.drugKcal+=d.kcal*q; else t.foodKcal+=d.kcal*q; t.n+=q;});
   t.enKcal=t.kcal; t.enPro=t.pro; t.enWater=t.water;
   t.water+=flush;
@@ -713,19 +733,19 @@ function enSearch(I,T,E,pool,opts){
 let ivrows=[]; let doseMode='goal';
 (function initDesign(){
   const sel=$('enSel');
-  ['drug','food','sup'].forEach(c=>{const g=document.createElement('optgroup'); g.label=CAT[c]+(c==='drug'?'（経腸栄養剤）':c==='food'?'（流動食）':'（経口）');
-    ENTERAL.filter(d=>d.cat===c).forEach(d=>{const o=document.createElement('option');o.value=d.id;o.textContent=`${d.name}（${d.pkg}${d.unit}・${d.kcal}kcal）`;g.appendChild(o);}); sel.appendChild(g);});
+  [['drug','医薬品（経腸栄養剤）'],['food','食品（流動食）'],['sup','補助食品（経口）'],['water','水分・電解質']].forEach(([c,lb])=>{const g=document.createElement('optgroup'); g.label=lb;
+    ENTERAL.filter(d=>(d.grp||d.cat)===c).forEach(d=>{const o=document.createElement('option');o.value=d.id;o.textContent=d.id==='water'?'白湯（100mL単位）':`${d.name}（${d.pkg}${d.unit}・${d.kcal}kcal）`;g.appendChild(o);}); sel.appendChild(g);});
   $('ivSel').innerHTML=$('drugSel').innerHTML;
   $('enAdd').onclick=()=>{const q=parseFloat($('enQty').value)||1; const ex=erows.find(r=>r.id===sel.value); if(ex) ex.qty+=q; else erows.push({id:sel.value,qty:q,dil:enBy[sel.value].dil||0}); design();};
   $('ivAdd').onclick=()=>{const id=$('ivSel').value, q=parseFloat($('ivQty').value)||1; const ex=ivrows.find(r=>r.id===id); if(ex) ex.qty+=q; else ivrows.push({id,qty:q}); design();};
-  $('allClear').onclick=()=>{erows=[];ivrows=[];$('e_flush').value=0;design();};
+  $('allClear').onclick=()=>{erows=[];ivrows=[];design();};
   $('ivToCalc').onclick=()=>{
     const main=ivrows.filter(r=>!byId[r.id].sep && r.qty>0); if(!main.length) return;
     const base=main[0].qty; rows=main.map(r=>({id:r.id,qty:+(r.qty/base).toFixed(2)})); render();
     document.querySelector('.tab[data-tab=calc]').click(); window.scrollTo(0,0);};
   const m=$('enMaster');
   m.innerHTML='<tr><th>区分</th><th>製品名</th><th>1個</th><th>kcal</th><th>たんぱく g</th><th>脂質 g</th><th>炭水化物 g</th><th>水分 mL</th><th>Na mg</th><th>K mg</th><th>P mg</th><th>浸透圧 mOsm/L</th><th>特徴</th></tr>'+
-   ENTERAL.map(d=>`<tr><td>${CAT[d.cat]}</td><td>${esc(d.name)}</td><td class="num">${d.pkg}${d.unit}</td><td class="num">${d.kcal}</td><td class="num">${d.pro}</td><td class="num">${d.fat}</td><td class="num">${d.cho}</td><td class="num">${d.dil?'（溶解水'+d.dil+'）':(d.est?'約':'')+d.water}</td><td class="num">${d.na}</td><td class="num">${d.k}</td><td class="num">${d.p}</td><td class="num">${d.osm||'－'}</td><td>${esc(d.tag)}</td></tr>`).join('');
+   ENTERAL.filter(d=>d.id!=='water').map(d=>`<tr><td>${CAT[d.cat]}</td><td>${esc(d.name)}</td><td class="num">${d.pkg}${d.unit}</td><td class="num">${d.kcal}</td><td class="num">${d.pro}</td><td class="num">${d.fat}</td><td class="num">${d.cho}</td><td class="num">${d.dil?'（溶解水'+d.dil+'）':(d.est?'約':'')+d.water}</td><td class="num">${d.na}</td><td class="num">${d.k}</td><td class="num">${d.p}</td><td class="num">${d.osm||'－'}</td><td>${esc(d.tag)}</td></tr>`).join('');
   const box=$('tab-nst');
   const h=e=>{ if(e.target.closest('#enRows,#ivRows')) return; if(e.target.id==='enQty'||e.target.id==='ivQty'||e.target.id==='enSel'||e.target.id==='ivSel') return; design(); };
   box.addEventListener('input',h); box.addEventListener('change',h);
@@ -763,8 +783,9 @@ function design(){
   tg.querySelectorAll('[data-dose]').forEach(b=>b.onclick=()=>{doseMode=b.dataset.dose;design();});
   // --- 入力リスト ---
   $('enRows').innerHTML=erows.length?erows.map((r,i)=>{const d=enBy[r.id];
+    if(d.id==='water') return `<tr><td>白湯 <span class="tag">水分</span><div class="gen">100mL単位（例：2.5＝250mL）</div></td><td class="num"><input type="number" data-eq="${i}" value="${r.qty}" min="0" step="0.5"> ×100mL</td><td class="num">${fmt(100*r.qty,0)}mL</td><td><button class="small del" data-edel="${i}">×</button></td></tr>`;
     return `<tr><td>${esc(d.name)} <span class="tag ${d.cat==='drug'?'b':''}">${CAT[d.cat]}</span><div class="gen">${d.pkg}${d.unit}・${esc(d.tag)}${d.osm?'・'+d.osm+'mOsm/L':''}${d.form==='powder'?`<br>1個を溶かす水 <input type="number" data-dil="${i}" value="${r.dil}" min="0" step="10" style="width:64px"> mL`:''}</div></td>
-     <td class="num"><input type="number" data-eq="${i}" value="${r.qty}" min="0" step="0.5"> 個</td><td class="num">${fmt(d.kcal*r.qty,0)}kcal</td><td><button class="small del" data-edel="${i}">×</button></td></tr>`;}).join('')
+     <td class="num"><input type="number" data-eq="${i}" value="${r.qty}" min="0" step="0.5"> ${d.id==='solitaT'?'包':'個'}</td><td class="num">${fmt(d.kcal*r.qty,0)}kcal</td><td><button class="small del" data-edel="${i}">×</button></td></tr>`;}).join('')
     :'<tr><td class="empty">経腸栄養なし</td></tr>';
   $('ivRows').innerHTML=ivrows.length?ivrows.map((r,i)=>{const d=byId[r.id];
     return `<tr><td>${esc(label(d))}${d.cv?'<span class="tag">中心静脈</span>':''}${d.sep?'<span class="tag b">別ルート</span>':''}</td>
@@ -776,8 +797,10 @@ function design(){
   document.querySelectorAll('[data-iq]').forEach(e=>e.onchange=()=>{ivrows[+e.dataset.iq].qty=parseFloat(e.value)||0;design();});
   document.querySelectorAll('[data-idel]').forEach(e=>e.onclick=()=>{ivrows.splice(+e.dataset.idel,1);design();});
   // --- 合計 ---
-  const flush=num('e_flush');
+  const flush=0;
   const te=enTotals(erows.filter(r=>r.qty>0),0,null), ti=ivTotals(ivrows);
+  const keep=erows.filter(r=>r.qty>0&&enBy[r.id].grp==='water'), tk=enTotals(keep,0,null);
+  const wat=erows.filter(r=>r.id==='water').reduce((a,r)=>a+100*r.qty,0);
   const ivNaMg=ti.na*23, ivKMg=ti.k*39.1;
   const tot={kcal:te.kcal+ti.kcal, pro:te.pro+ti.aa, water:te.water+flush+ti.vol, na:te.na+ivNaMg, k:te.k+ivKMg, p:te.p};
   const salt=x=>x*2.54/1000;
@@ -789,7 +812,7 @@ function design(){
   const rowsE=[
     ['熱量 kcal', fmt(E,0)+(start?'（開始量）':''), fmt(te.kcal,0), fmt(ti.kcal,0), '<b>'+fmt(tot.kcal,0)+'</b>', eR<0.9?J(0,'不足 '+fmt(E-tot.kcal,0)):eR>1.1?J(0,'過剰 '+fmt(tot.kcal-E,0)):J(1,'○ '+fmt(eR*100,0)+'％')],
     ['たんぱく質・アミノ酸 g', fmt(Pr[0],0)+'〜'+fmt(Pr[1],0), fmt(te.pro,1), fmt(ti.aa,1), '<b>'+fmt(tot.pro,1)+'</b>', tot.pro<Pr[0]*0.95?J(0,'不足 '+fmt(Pr[0]-tot.pro,0)):tot.pro>Pr[1]*1.05?J(0,'過剰 '+fmt(tot.pro-Pr[1],0)):J(1,'○ '+fmt(tot.pro/W,2)+'g/kg')],
-    ['水分 mL', fmt(fluid,0), fmt(te.water+flush,0)+(flush?'<div class="gen">うち白湯'+fmt(flush,0)+'</div>':''), fmt(ti.vol,0), '<b>'+fmt(tot.water,0)+'</b>', tot.water<fluid*0.9?J(0,'不足 '+fmt(fluid-tot.water,0)):tot.water>fluid*1.1?J(0,'過剰 '+fmt(tot.water-fluid,0)):J(1,'○')],
+    ['水分 mL', fmt(fluid,0), fmt(te.water,0)+(wat>0?'<div class="gen">うち白湯'+fmt(wat,0)+'</div>':''), fmt(ti.vol,0), '<b>'+fmt(tot.water,0)+'</b>', tot.water<fluid*0.9?J(0,'不足 '+fmt(fluid-tot.water,0)):tot.water>fluid*1.1?J(0,'過剰 '+fmt(tot.water-fluid,0)):J(1,'○')],
   ];
   if(ti.glu>0) rowsE.push(['糖（輸液）', I.gLim+'mg/kg/分以下', '－', fmt(ti.glu,0)+'g', fmt(gmk,1)+'mg/kg/分', gmk>I.gLim?J(0,'上限超え'):J(1,'○')]);
   const fatTot=te.fat+ti.fat, fatPct=tot.kcal>0?fatTot*9/tot.kcal*100:0;
@@ -808,6 +831,8 @@ function design(){
   if(hiO.length) Wn.push('浸透圧が高めの経腸栄養剤（mOsm/L）：'+hiO.join('、')+'。下痢がみられる場合は投与速度を落とす・濃度の低い製品に変えるなどを検討');
   if(erows.some(r=>r.id==='elental'&&r.qty>0)) Wn.push('エレンタールは脂肪がほとんどないため、長期使用では必須脂肪酸欠乏に注意（脂肪乳剤の併用を検討）');
   if(erows.some(r=>enBy[r.id].form==='semi'&&r.qty>0)&&$('e_route').value==='ng') Wn.push('半固形製剤は胃瘻から注入します（経鼻胃管では使わない）');
+  if(erows.some(r=>r.id==='solitaT'&&r.qty>0)){ if(['g4','g5','hd','pd'].includes(I.renal)) Wn.push('ソリタ−T配合顆粒3号は重篤な腎障害の患者には禁忌（添付文書）');
+    if($('e_route').value!=='oral') Wn.push('ソリタ−T配合顆粒3号の添付文書の用法は経口投与です'); }
   if(ivrows.some(r=>r.id==='hicaliq'&&r.qty>0)) Wn.push('ハイカリックRFはK・Pを含まず、ビタミンB1の併用が必要。総合ビタミン剤・微量元素製剤を追加し、K・Pは血清値を見て補正');
   if(ivrows.some(r=>byId[r.id].cv&&r.qty>0)) Wn.push('中心静脈専用製剤を含みます（中心静脈から投与）');
   if(ivrows.some(r=>r.id==='enefluid'&&r.qty>0)) Wn.push('エネフリードは脂肪を含むため、他の薬剤の混注・側管からの投与はしない（添付文書）');
@@ -819,6 +844,69 @@ function design(){
    `<div style="overflow-x:auto"><table class="ev"><tr><th>項目</th><th>目標</th><th>経腸</th><th>輸液</th><th>合計</th><th>判定</th></tr>${rowsE.map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map((c,k)=>`<td class="${k<4?'num':''}">${c}</td>`).join('')}</tr>`).join('')}</table></div>
    ${te.n>0?`<p class="note" style="margin:4px 0 0">経腸の持続投与：約${fmt(te.vol,0)}mL → 24時間で約${fmt(te.vol/24,0)}mL/時、12時間で約${fmt(te.vol/12,0)}mL/時。輸液のリンは計算に含めていません。</p>`:''}
    ${Wn.map(w=>'<div class="warn">'+esc(w)+'</div>').join('')}`;
+  // --- ステップアップ表 ---
+  (function(){
+    const liq=erows.filter(r=>r.qty>0&&['liquid','powder'].includes(enBy[r.id].form)&&enBy[r.id].grp!=='water');
+    const semi=erows.some(r=>r.qty>0&&enBy[r.id].form==='semi');
+    const box=$('stepBox');
+    if(!liq.length){ box.innerHTML='<div class="note">液体の経腸栄養剤を入力すると、目標量までの増やし方の目安を表示します'+(semi?'（半固形製剤は速度で管理しないため対象外）':'')+'。</div>'; return; }
+    const tl=enTotals(liq,0,null), gV=tl.vol, gK=tl.kcal;
+    const st=Math.max(1,num('s_start')), inc=num('s_inc'), hr=Math.min(24,Math.max(1,num('s_hours'))), mx=Math.max(st,num('s_max'));
+    const rs=[]; let reached=false;
+    for(let d=1; d<=14; d++){ const rate=Math.min(st+inc*(d-1),mx); const vol=Math.min(rate*hr,gV); rs.push([d,rate,vol,gK*vol/gV]); if(vol>=gV-0.5){reached=true;break;} if(inc<=0&&d>=1&&rate*hr<gV&&d>=3) break; }
+    const notes=[];
+    if(!reached) notes.push(`この設定では14日以内に目標量（${fmt(gV,0)}mL）に届きません。目標量を${fmt(hr,0)}時間で入れるには約${fmt(gV/hr,0)}mL/時が必要`);
+    if(I.Estart && rs[0][3]>I.Estart) notes.push(`リフィーディング症候群の高リスク：1日目の熱量（${fmt(rs[0][3],0)}kcal）が開始量の目安（${fmt(I.Estart,0)}kcal）を超えています。開始速度を約${fmt(I.Estart/gK*gV/hr,0)}mL/時以下に`);
+    if(semi) notes.push('半固形製剤はこの表に含めていません');
+    box.innerHTML=`<p class="note" style="margin:0 0 4px">目標：液体の経腸栄養剤 ${fmt(gV,0)}mL／${fmt(gK,0)}kcal（白湯・ソリタ−Tは除く）</p>
+     <div style="overflow-x:auto"><table class="ev"><tr><th>日目</th><th>速度</th><th>1日の量</th><th>熱量</th><th>目標比</th></tr>
+     ${rs.map(r=>`<tr><td class="num">${r[0]}日目</td><td class="num">${fmt(r[1],0)} mL/時</td><td class="num">${fmt(r[2],0)} mL</td><td class="num">${fmt(r[3],0)} kcal</td><td class="num">${fmt(r[2]/gV*100,0)}％</td></tr>`).join('')}</table></div>
+     ${notes.map(n=>'<div class="warn">'+esc(n)+'</div>').join('')}
+     <p class="note" style="margin:4px 0 0">下痢・腹部膨満・嘔吐・胃残量などを見ながら増やし、症状があれば1段階戻します。間欠投与の場合は1日の投与時間の合計を入れてください。速度・増量幅は施設の手順・主治医の指示に合わせて変更してください。</p>`;
+  })();
+  // --- モニタリング項目 ---
+  const mon=[];
+  const hasEN=te.kcal>0, hasPN=ivrows.some(r=>r.qty>0);
+  const has=id=>ivrows.some(r=>r.id===id&&r.qty>0), hasE=id=>erows.some(r=>r.id===id&&r.qty>0);
+  if(hasEN||hasPN) mon.push(['全体','体重、水分出納（尿量・排液）、浮腫・脱水の所見']);
+  if(I.Estart) mon.push(['リフィーディング','栄養開始前からビタミンB1を補充。P・K・Mg・血糖を開始後数日は毎日測定し、低下があれば補正']);
+  if(hasPN) mon.push(['静脈栄養','血糖、電解質（Na・K・Cl・P・Mg）、BUN・Cr、肝機能（AST・ALT・T-Bil）']);
+  if(ti.fat>0) mon.push(['脂肪乳剤','血清TG（高TG血症では減量・中止を検討）。0.1g/kg/時以下で投与（'+fmt(ti.fat/(0.1*W),1)+'時間以上）。輸液ラインは24時間以内に交換']);
+  if(ivrows.some(r=>byId[r.id].cv&&r.qty>0)) mon.push(['中心静脈','発熱などカテーテル関連血流感染の徴候、刺入部の観察']);
+  if(has('hicaliq')) mon.push(['ハイカリックRF','ビタミンB1の併用が必須（乳酸アシドーシス予防）。総合ビタミン剤・微量元素製剤を追加。K・Pは含まないため血清値を確認']);
+  if(has('bfluid')) mon.push(['ビーフリード','ビタミンB1以外のビタミン・微量元素は含まないため、長期化する場合は追加や経路の変更を検討']);
+  if(hasEN) mon.push(['経腸栄養','下痢・腹部膨満・嘔吐（誤嚥）、排便の状況'+($('e_route').value!=='oral'?'、チューブの位置':'')]);
+  if(erows.some(r=>r.qty>0&&enBy[r.id].form==='semi')) mon.push(['半固形製剤','胃瘻部からの漏れ、注入時の抵抗']);
+  if(hasE('elental')) mon.push(['エレンタール','長期使用では必須脂肪酸欠乏（皮膚炎など）に注意。脂肪乳剤の併用を検討']);
+  if(hasE('solitaT')) mon.push(['ソリタ−T配合顆粒3号','血清Na・K（Kを含むため腎機能低下時は注意）']);
+  if(I.renal!=='no') mon.push(['腎機能','BUN・Cr・K・P'+(RR.dialysis?'、透析間の体重増加':'')+(RR.restrict&&I.phase!=='stress'?'。たんぱく質を制限するときはエネルギー不足・体重減少に注意':'')]);
+  if(I.liver==='he') mon.push(['肝性脳症','血中アンモニア、意識状態']);
+  if(I.dm||gmk>I.gLim) mon.push(['血糖','血糖を頻回に測定し、必要に応じてインスリンを使用']);
+  if(tot.k>(kMax||1e9)||(I.renal!=='no'&&tot.k>2000)) mon.push(['カリウム','K投与量が多め。血清Kを確認']);
+  $('monBox').innerHTML=mon.length?'<table class="tgt">'+mon.map(m=>`<tr><td>${esc(m[0])}</td><td>${esc(m[1])}</td></tr>`).join('')+'</table>':'<div class="note">経腸栄養・輸液を入力すると、内容に合わせた確認項目を表示します。</div>';
+  // --- 記録用テキスト ---
+  const d=new Date(), ds=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+  const L=[];
+  L.push(`【栄養設計】${ds}`);
+  L.push(`患者：${I.sex==='m'?'男性':'女性'} ${I.age}歳 ${I.ht}cm ${I.wt}kg（計算体重${fmt(W,1)}kg）／${I.phase==='stress'?'侵襲期':'安定期'}／腎機能 ${RENAL_LABEL[I.renal]}${I.liver!=='no'?'／肝不全'+(I.liver==='he'?'（肝性脳症）':''):''}${I.dm?'／糖尿病':''}${I.sarco?'／サルコペニア':''}${I.Estart?'／リフィーディング高リスク':''}`);
+  L.push(`目標${start?'（開始量）':''}：熱量 ${fmt(E,0)}kcal／たんぱく質 ${fmt(Pr[0],0)}〜${fmt(Pr[1],0)}g／水分 ${fmt(fluid,0)}mL／脂質 ${fmt(E*0.2/9,0)}〜${fmt(E*0.3/9,0)}g`+(saltMax?`／食塩 ${saltMax}g未満`:'')+(kMax?`／K ${fmt(kMax,0)}mg以下`:''));
+  L.push('経腸：'+(erows.filter(r=>r.qty>0).length?erows.filter(r=>r.qty>0).map(r=>{const e=enBy[r.id]; return r.id==='water'?`白湯 ${fmt(100*r.qty,0)}mL`:`${e.name}（${e.pkg}${e.unit}）×${r.qty}`;}).join('、'):'なし'));
+  L.push('輸液：'+(ivrows.filter(r=>r.qty>0).length?ivrows.filter(r=>r.qty>0).map(r=>`${label(byId[r.id])}×${r.qty}`).join('、'):'なし'));
+  L.push(`評価：熱量 ${fmt(tot.kcal,0)}kcal（目標の${fmt(eR*100,0)}％）／たんぱく質・アミノ酸 ${fmt(tot.pro,1)}g（${fmt(tot.pro/W,2)}g/kg）／水分 ${fmt(tot.water,0)}mL／脂質 ${fmt(fatTot,1)}g（${fmt(fatPct,0)}％）／食塩 ${fmt(salt(tot.na),1)}g／K ${fmt(tot.k,0)}mg`+(ti.glu>0?`／糖 ${fmt(gmk,1)}mg/kg/分`:''));
+  const lack=[]; if(eR<0.9) lack.push(`熱量 ${fmt(E-tot.kcal,0)}kcal不足`); if(tot.pro<Pr[0]*0.95) lack.push(`たんぱく質 ${fmt(Pr[0]-tot.pro,0)}g不足`); if(tot.water<fluid*0.9) lack.push(`水分 ${fmt(fluid-tot.water,0)}mL不足`);
+  if(eR>1.1) lack.push(`熱量 ${fmt(tot.kcal-E,0)}kcal過剰`); if(tot.pro>Pr[1]*1.05) lack.push(`たんぱく質 ${fmt(tot.pro-Pr[1],0)}g過剰`); if(tot.water>fluid*1.1) lack.push(`水分 ${fmt(tot.water-fluid,0)}mL過剰`);
+  if(lack.length) L.push('判定：'+lack.join('、'));
+  if(Wn.length) L.push('注意：'+Wn.join('／'));
+  if(mon.length) L.push('モニタリング：'+mon.map(m=>m[0]+'（'+m[1]+'）').join('／'));
+  L.push('※輸液計算・NST投与設計ツール（薬剤科）による目安。最終判断は主治医・NST。');
+  const sumText=L.join('\n');
+  $('btnCopy').onclick=async()=>{
+    const ta=$('copyArea'); ta.value=sumText; let ok=false;
+    try{ await navigator.clipboard.writeText(sumText); ok=true; }catch(e){ try{ ta.style.display='block'; ta.select(); ok=document.execCommand('copy'); }catch(e2){} }
+    $('copyMsg').textContent= ok?'コピーしました。カルテ等に貼り付けてください。':'自動でコピーできませんでした。下の枠を選択してコピーしてください。';
+    if(!ok) ta.style.display='block';
+  };
+  $('btnPrint').onclick=()=>{ $('printArea').textContent=sumText; window.print(); };
   // --- 提案 ---
   const mode=document.querySelector('input[name=mode]:checked').value;
   const pb=$('propBox');
@@ -830,7 +918,7 @@ function design(){
     const Pd2=Pmid-te.pro, Ed2=E-te.kcal, Fd2=fluid-te.water-flush; // 経腸だけを固定し、輸液は入れ替え
     if(Ed2<Math.max(100,E*0.15) && Pd2<Pmid*0.15){
       if(Fd2>=100){
-        cards.push(simpleCard('水分だけ不足：白湯で補う',`白湯 約${fmt(Fd2,0)}mL/日（経管フラッシュ・経口）`,[],'flush',Math.round(Fd2/10)*10));
+        cards.push(simpleCard('水分だけ不足：白湯で補う',`白湯 約${fmt(Math.round(Fd2/50)*50,0)}mL/日（経管フラッシュ・経口）`,[],'flush',Math.round(Fd2/50)/2));
         const n5=Math.floor(Fd2/500), r=Fd2-n5*500, n2=r>=150?Math.round(r/200):0;
         const it=[]; if(n5) it.push(['sol3a_500',n5]); if(n2) it.push(['sol3a_200',n2]);
         if(it.length){const t=totals(it); cards.push(simpleCard('水分だけ不足：維持液で補う', it.map(([id,q])=>esc(label(byId[id]))+' × '+q+'袋').join('<br>'),[`${fmt(t.vol,0)}mL・${fmt(t.kcal,0)}kcal・Na ${fmt(t.na,0)}mEq・K ${fmt(t.k,0)}mEq${kMax||RR.dialysis?'。腎機能低下ではKに注意（K不含の輸液も検討）':''}`],'iv',it));}
@@ -850,12 +938,12 @@ function design(){
       if(te.kcal>0) html+='<p class="note" style="margin:0 0 6px">入力済みの経腸栄養（'+fmt(te.kcal,0)+'kcal）を差し引いた不足分を輸液で補う案です。入力中の輸液は置き換わります。</p>';
     }
   } else {
-    const Ed2=E-ti.kcal, Pr2=[Math.max(0,Pr[0]-ti.aa),Math.max(0,Pr[1]-ti.aa)], F2=fluid-ti.vol;
+    const Ed2=E-ti.kcal-tk.kcal, Pr2=[Math.max(0,Pr[0]-ti.aa),Math.max(0,Pr[1]-ti.aa)], F2=fluid-ti.vol-tk.water;
     if(Ed2<100){ html='<div class="info">輸液で目標熱量をほぼ満たしています。経腸栄養の提案はありません。</div>'; }
     else{
-      const T2={E:Ed2,Pr:Pr2,fluid:Math.max(200,F2),kMax:kMax?Math.max(200,kMax-ivKMg):null,salt:saltMax?Math.max(1,saltMax-salt(ivNaMg)):null,pMax};
+      const T2={E:Ed2,Pr:Pr2,fluid:Math.max(200,F2),kMax:kMax?Math.max(200,kMax-ivKMg-tk.k):null,salt:saltMax?Math.max(1,saltMax-salt(ivNaMg+tk.na)):null,pMax};
       const res=[]; const seen=new Set();
-      const add=(title,r,sub)=>{ if(!r||res.length>=2) return; const key=JSON.stringify(r.items); if(seen.has(key)) return; seen.add(key); res.push(enCard(title,r,sub,T2,Ed2,W,ti,flush,fluid)); };
+      const add=(title,r,sub)=>{ if(!r||res.length>=2) return; const key=JSON.stringify(r.items); if(seen.has(key)) return; seen.add(key); res.push(enCard(title,r,sub,T2,Ed2,W,ti,tk.water,fluid)); };
       if(I.liver==='he') add('肝性脳症向け（アミノレバンEN 3包＋流動食）',enSearch(I,T2,Ed2,ENTERAL,{fixed:[['aminoEN',3]],filter:d=>!['renLP','renMP'].includes(d.id)}),'アミノレバンEN 1回1包×1日3回');
       if(RR.restrict&&I.phase!=='stress') add('CKD向け（リーナレンを使う）',enSearch(I,T2,Ed2,ENTERAL,{must:d=>d.id==='renLP'||d.id==='renMP'}),'低たんぱく・K/P控えめ');
       if(RR.dialysis) add('透析向け（水分・K・Pを抑える）',enSearch(I,T2,Ed2,ENTERAL,{filter:d=>['renMP','renLP','mar2','ensH','inolas','pg400','pg300'].includes(d.id)}),'高濃度・K/P控えめの製品から');
@@ -863,15 +951,15 @@ function design(){
       add('目標に最も近い組み合わせ',enSearch(I,T2,Ed2,ENTERAL),'全採用品から');
       add('医薬品（経腸栄養剤）のみ',enSearch(I,T2,Ed2,ENTERAL,{filter:d=>d.cat==='drug'}),'薬価収載品のみ（退院後も処方で継続しやすい）');
       cards.push(...res);
-      if(ti.kcal>0) html+='<p class="note" style="margin:0 0 6px">入力済みの輸液（'+fmt(ti.kcal,0)+'kcal）を差し引いた不足分を経腸栄養で補う案です。入力中の経腸栄養は置き換わります。</p>';
+      if(ti.kcal>0) html+='<p class="note" style="margin:0 0 6px">入力済みの輸液（'+fmt(ti.kcal,0)+'kcal）を差し引いた不足分を経腸栄養で補う案です。入力中の経腸栄養剤は置き換わります（白湯・ソリタ−Tはそのまま）。</p>';
     }
   }
   pb.innerHTML=html+(cards.length?'<div class="plans">'+cards.join('')+'</div>':'')+'<p class="note" style="margin-top:8px">提案は採用品の組み合わせから計算した目安です。モニタリング（体重・血糖・電解質・BUN・TGなど）で再評価し、最終的な処方は主治医・NSTが判断してください。</p>';
   pb.querySelectorAll('[data-apply]').forEach(b=>b.onclick=()=>{
     const o=JSON.parse(b.dataset.apply);
     if(o.t==='iv') ivrows=o.v.map(([id,q])=>({id,qty:q}));
-    else if(o.t==='en') erows=o.v.map(([id,q])=>({id,qty:q,dil:enBy[id].dil||0}));
-    else if(o.t==='flush') $('e_flush').value=num('e_flush')+o.v;
+    else if(o.t==='en') erows=o.v.map(([id,q])=>({id,qty:q,dil:enBy[id].dil||0})).concat(erows.filter(r=>enBy[r.id].grp==='water'));
+    else if(o.t==='flush'){ const ex=erows.find(r=>r.id==='water'); if(ex) ex.qty+=o.v; else erows.push({id:'water',qty:o.v,dil:0}); }
     design(); $('evalBox').scrollIntoView({behavior:'smooth',block:'start'});
   });
 }
@@ -922,5 +1010,6 @@ function enCard(title,r,sub,T,Ed,W,ti,flush,fluid){
 }
 
 </script>
+<div id="printArea"></div>
 </body>
 </html>
