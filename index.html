@@ -322,8 +322,8 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
     <div style="overflow-x:auto;margin-top:6px"><table class="master" id="enMaster"></table></div>
     <div class="note" style="margin-top:6px">
       ・医薬品は各製品の添付文書（KEGG MEDICUS掲載の添付文書情報、エンシュア・Hの水分量はアボット社添付文書）、エレンタールはEAファーマ／エーザイ「調製早見表・栄養成分組成」、食品は各メーカーの公式製品情報（森永乳業クリニコ、明治、ニュートリー、キッセイ薬品工業、ネスレ日本）。グルセルナ-REXはメーカーサイトに組成表がないため販売店（ヘルシーネットワーク）の栄養成分表示。確認日：2026年11月6日。<br>
-      ・<b>水分に「約」が付いた値</b>（エンシュア・リキッド、エネーボ、ラコールNF液）は添付文書に記載がないため、同じ濃度の製剤からの目安です。正確な値はメーカー資料で確認してください。<br>
-      ・プロッカZnはK・Pの表示がないため0として計算しています。エレンタール・アミノレバンENは溶かす水の量（初期値：エレンタール80gを250mLで溶解＝約300mL、アミノレバンEN 1包を約180mLで溶解）を水分に含めます。<br>
+      ・院内資料「経腸栄養剤・栄養補助食品一覧」（2025年1月）と照合し、エネーボ・ラコールNF液の水分、PGソフトEJの水分、プロッカZnのK・P、浸透圧（mOsm/L）は同資料の値を使っています。<br>・<b>エンシュア・リキッドの水分（約213mL）</b>は添付文書・院内資料に記載がないため、同じ濃度の製剤からの目安です。<br>・院内資料と現行の添付文書で値が異なる製品（アミノレバンEN：院内資料 210kcal・Na48.7mg・K169mg・P84mg／現行添付文書 213kcal・Na38.98mg・K212.1mg・P92.41mg など）は、<b>現行の添付文書の値</b>を使っています。<br>
+      ・プロッカZnはメーカー表示が77g（院内資料は70g）のため、熱量・たんぱく質・Naはメーカー表示の値です。エレンタール・アミノレバンENは溶かす水の量（初期値：エレンタール80gを250mLで溶解＝約300mL、アミノレバンEN 1包を約180mLで溶解）を水分に含めます。<br>
       ・たんぱく質は製品表示の値です（エレンタールは遊離アミノ酸として13.14g/袋）。炭水化物は食物繊維を含む値です（医薬品は糖質＋イヌリン等）。<br>
       ・食品（流動食・栄養補助食品）は薬価収載品ではありません。入院中は食事（入院時食事療養）として扱います。
     </div>
@@ -742,25 +742,25 @@ document.querySelectorAll('#tab-nst input, #tab-nst select').forEach(e=>{e.addEv
 // 1個あたり。na,k,p は mg。water は mL(g)。est:水分が目安値。dil:溶解水の初期値(mL)
 const ENTERAL=[
  {id:'ensL',cat:'drug',name:'エンシュア・リキッド',pkg:250,unit:'mL',kcal:250,pro:8.8,fat:8.8,cho:34.3,water:213,est:1,na:200,k:370,p:130,form:'liquid',tag:'標準 1.0kcal/mL'},
- {id:'ensH',cat:'drug',name:'エンシュア・H',pkg:250,unit:'mL',kcal:375,pro:13.2,fat:13.2,cho:51.5,water:194,na:300,k:560,p:200,form:'liquid',tag:'高濃度 1.5kcal/mL'},
- {id:'enevo',cat:'drug',name:'エネーボ配合経腸用液',pkg:250,unit:'mL',kcal:300,pro:13.5,fat:9.6,cho:39.6,water:203,est:1,na:230,k:300,p:250,form:'liquid',tag:'1.2kcal/mL・高たんぱく'},
- {id:'racolL',cat:'drug',name:'ラコールNF配合経腸用液',pkg:200,unit:'mL',kcal:200,pro:8.76,fat:4.46,cho:31.24,water:170,est:1,na:147.6,k:276,p:88,form:'liquid',tag:'標準 1.0kcal/mL'},
+ {id:'ensH',osm:540,cat:'drug',name:'エンシュア・H',pkg:250,unit:'mL',kcal:375,pro:13.2,fat:13.2,cho:51.5,water:194,na:300,k:560,p:200,form:'liquid',tag:'高濃度 1.5kcal/mL'},
+ {id:'enevo',osm:350,cat:'drug',name:'エネーボ配合経腸用液',pkg:250,unit:'mL',kcal:300,pro:13.5,fat:9.6,cho:39.6,water:203,na:230,k:300,p:250,form:'liquid',tag:'1.2kcal/mL・高たんぱく'},
+ {id:'racolL',osm:330,cat:'drug',name:'ラコールNF配合経腸用液',pkg:200,unit:'mL',kcal:200,pro:8.76,fat:4.46,cho:31.24,water:170,na:147.6,k:276,p:88,form:'liquid',tag:'標準 1.0kcal/mL'},
  {id:'racolS',cat:'drug',name:'ラコールNF配合経腸用半固形剤',pkg:300,unit:'g',kcal:300,pro:13.14,fat:6.69,cho:46.86,water:228,na:221.4,k:414,p:132,form:'semi',tag:'半固形（胃瘻）'},
  {id:'inolas',cat:'drug',name:'イノラス配合経腸用液',pkg:187.5,unit:'mL',kcal:300,pro:12.0,fat:9.66,cho:42.79,water:140,na:270,k:551,p:333.4,form:'liquid',tag:'高濃度 1.6kcal/mL'},
  {id:'inosol',cat:'drug',name:'イノソリッド配合経腸用半固形剤',pkg:300,unit:'g',kcal:300,pro:13.5,fat:8.34,cho:44.25,water:228,na:393,k:552,p:333.6,form:'semi',tag:'半固形（胃瘻）'},
- {id:'twin',cat:'drug',name:'ツインラインNF配合経腸用液',pkg:400,unit:'mL',kcal:400,pro:16.2,fat:11.12,cho:58.72,water:340,na:276,k:470,p:212,form:'liquid',tag:'消化態（A液＋B液）'},
- {id:'elental',cat:'drug',name:'エレンタール配合内用剤',pkg:80,unit:'g',kcal:300,pro:13.14,fat:0.51,cho:63.41,water:0,dil:250,na:260,k:217.6,p:121.6,form:'powder',tag:'成分栄養剤（脂肪ほぼなし）'},
- {id:'aminoEN',cat:'drug',name:'アミノレバンEN配合散',pkg:50,unit:'g',kcal:213,pro:13.5,fat:3.7,cho:31.5,water:0,dil:180,na:38.98,k:212.1,p:92.41,form:'powder',tag:'肝不全用（BCAA高含有）'},
- {id:'czhi',cat:'food',name:'CZ-Hi',pkg:200,unit:'mL',kcal:200,pro:10.0,fat:4.4,cho:34.2,water:168,na:180,k:300,p:150,form:'liquid',tag:'標準 1.0kcal/mL'},
- {id:'mar2',cat:'food',name:'MA-R2.0',pkg:200,unit:'mL',kcal:400,pro:14.6,fat:11.2,cho:63.2,water:139,na:300,k:320,p:200,form:'liquid',tag:'高濃度 2.0kcal/mL'},
- {id:'renLP',cat:'food',name:'明治リーナレンLP',pkg:125,unit:'mL',kcal:200,pro:2.0,fat:5.6,cho:36.6,water:94.8,na:60,k:60,p:40,form:'liquid',tag:'腎不全用・低たんぱく 1.6kcal/mL'},
- {id:'renMP',cat:'food',name:'明治リーナレンMP',pkg:125,unit:'mL',kcal:200,pro:7.0,fat:5.6,cho:31.6,water:94.4,na:120,k:60,p:70,form:'liquid',tag:'腎不全用 1.6kcal/mL'},
- {id:'glurex',cat:'food',name:'グルセルナ-REX',pkg:200,unit:'mL',kcal:200,pro:8.4,fat:11.1,cho:19.4,water:170,na:188,k:200,p:130,form:'liquid',tag:'糖尿病用（糖質控えめ）'},
- {id:'pg300',cat:'food',name:'PGソフトEJ300',pkg:200,unit:'g',kcal:300,pro:12.0,fat:6.6,cho:48.2,water:132,na:408,k:387,p:225,form:'semi',tag:'半固形（胃瘻）1.5kcal/g'},
- {id:'pg400',cat:'food',name:'PGソフトEJ400',pkg:267,unit:'g',kcal:400,pro:16.0,fat:8.8,cho:64.2,water:176,na:544,k:516,p:300,form:'semi',tag:'半固形（胃瘻）1.5kcal/g'},
+ {id:'twin',osm:595,cat:'drug',name:'ツインラインNF配合経腸用液',pkg:400,unit:'mL',kcal:400,pro:16.2,fat:11.12,cho:58.72,water:340,na:276,k:470,p:212,form:'liquid',tag:'消化態（A液＋B液）'},
+ {id:'elental',osm:760,cat:'drug',name:'エレンタール配合内用剤',pkg:80,unit:'g',kcal:300,pro:13.14,fat:0.51,cho:63.41,water:0,dil:250,na:260,k:217.6,p:121.6,form:'powder',tag:'成分栄養剤（脂肪ほぼなし）'},
+ {id:'aminoEN',osm:640,cat:'drug',name:'アミノレバンEN配合散',pkg:50,unit:'g',kcal:213,pro:13.5,fat:3.7,cho:31.5,water:0,dil:180,na:38.98,k:212.1,p:92.41,form:'powder',tag:'肝不全用（BCAA高含有）'},
+ {id:'czhi',osm:300,cat:'food',name:'CZ-Hi',pkg:200,unit:'mL',kcal:200,pro:10.0,fat:4.4,cho:34.2,water:168,na:180,k:300,p:150,form:'liquid',tag:'標準 1.0kcal/mL'},
+ {id:'mar2',osm:620,cat:'food',name:'MA-R2.0',pkg:200,unit:'mL',kcal:400,pro:14.6,fat:11.2,cho:63.2,water:139,na:300,k:320,p:200,form:'liquid',tag:'高濃度 2.0kcal/mL'},
+ {id:'renLP',osm:720,cat:'food',name:'明治リーナレンLP',pkg:125,unit:'mL',kcal:200,pro:2.0,fat:5.6,cho:36.6,water:94.8,na:60,k:60,p:40,form:'liquid',tag:'腎不全用・低たんぱく 1.6kcal/mL'},
+ {id:'renMP',osm:730,cat:'food',name:'明治リーナレンMP',pkg:125,unit:'mL',kcal:200,pro:7.0,fat:5.6,cho:31.6,water:94.4,na:120,k:60,p:70,form:'liquid',tag:'腎不全用 1.6kcal/mL'},
+ {id:'glurex',osm:560,cat:'food',name:'グルセルナ-REX',pkg:200,unit:'mL',kcal:200,pro:8.4,fat:11.1,cho:19.4,water:170,na:188,k:200,p:130,form:'liquid',tag:'糖尿病用（糖質控えめ）'},
+ {id:'pg300',cat:'food',name:'PGソフトEJ300',pkg:200,unit:'g',kcal:300,pro:12.0,fat:6.6,cho:48.2,water:131,na:408,k:387,p:225,form:'semi',tag:'半固形（胃瘻）1.5kcal/g'},
+ {id:'pg400',cat:'food',name:'PGソフトEJ400',pkg:267,unit:'g',kcal:400,pro:16.0,fat:8.8,cho:64.2,water:175,na:544,k:516,p:300,form:'semi',tag:'半固形（胃瘻）1.5kcal/g'},
  {id:'agal',cat:'sup',name:'ソフトアガロリー',pkg:83,unit:'g',kcal:150,pro:0,fat:0,cho:37.5,water:45.3,na:0,k:6,p:1,form:'jelly',tag:'経口・たんぱく0（腎不全のエネルギー補給）'},
  {id:'isojel',cat:'sup',name:'アイソカルゼリー ハイカロリー',pkg:66,unit:'g',kcal:150,pro:3.0,fat:7.9,cho:16.8,water:38,na:59,k:20,p:28,form:'jelly',tag:'経口・えん下困難者用'},
- {id:'procca',cat:'sup',name:'プロッカZn',pkg:77,unit:'g',kcal:80,pro:6.2,fat:0,cho:13.8,water:57.7,na:35,k:0,p:0,nokp:1,form:'jelly',tag:'経口・たんぱく・亜鉛補給'},
+ {id:'procca',cat:'sup',name:'プロッカZn',pkg:77,unit:'g',kcal:80,pro:6.2,fat:0,cho:13.8,water:57.7,na:35,k:11,p:0,form:'jelly',tag:'経口・たんぱく・亜鉛補給'},
 ];
 const enBy=Object.fromEntries(ENTERAL.map(d=>[d.id,d]));
 const CAT={drug:'医薬品',food:'食品',sup:'補助食品'};
@@ -776,8 +776,8 @@ let erows=[];
   $('pClear').onclick=()=>{['p_kcal','p_aa','p_vol','p_na','p_k'].forEach(i=>$(i).value=0);en();};
   ['e_route','e_flush','p_kcal','p_aa','p_vol','p_na','p_k'].forEach(i=>{$(i).addEventListener('input',en);$(i).addEventListener('change',en);});
   const m=$('enMaster');
-  m.innerHTML='<tr><th>区分</th><th>製品名</th><th>1個</th><th>kcal</th><th>たんぱく g</th><th>脂質 g</th><th>炭水化物 g</th><th>水分 mL</th><th>Na mg</th><th>K mg</th><th>P mg</th><th>特徴</th></tr>'+
-   ENTERAL.map(d=>`<tr><td>${CAT[d.cat]}</td><td>${esc(d.name)}</td><td class="num">${d.pkg}${d.unit}</td><td class="num">${d.kcal}</td><td class="num">${d.pro}</td><td class="num">${d.fat}</td><td class="num">${d.cho}</td><td class="num">${d.dil?'（溶解水'+d.dil+'）':(d.est?'約':'')+d.water}</td><td class="num">${d.na}</td><td class="num">${d.nokp?'表示なし':d.k}</td><td class="num">${d.nokp?'表示なし':d.p}</td><td>${esc(d.tag)}</td></tr>`).join('');
+  m.innerHTML='<tr><th>区分</th><th>製品名</th><th>1個</th><th>kcal</th><th>たんぱく g</th><th>脂質 g</th><th>炭水化物 g</th><th>水分 mL</th><th>Na mg</th><th>K mg</th><th>P mg</th><th>浸透圧 mOsm/L</th><th>特徴</th></tr>'+
+   ENTERAL.map(d=>`<tr><td>${CAT[d.cat]}</td><td>${esc(d.name)}</td><td class="num">${d.pkg}${d.unit}</td><td class="num">${d.kcal}</td><td class="num">${d.pro}</td><td class="num">${d.fat}</td><td class="num">${d.cho}</td><td class="num">${d.dil?'（溶解水'+d.dil+'）':(d.est?'約':'')+d.water}</td><td class="num">${d.na}</td><td class="num">${d.nokp?'表示なし':d.k}</td><td class="num">${d.nokp?'表示なし':d.p}</td><td class="num">${d.osm||'－'}</td><td>${esc(d.tag)}</td></tr>`).join('');
 })();
 
 function enTotals(items,flush,pn){ // items: [{id,qty,dil}]
@@ -864,7 +864,7 @@ function en(){
   // 入力表
   const tb=$('enRows');
   tb.innerHTML=erows.length?erows.map((r,i)=>{const d=enBy[r.id]; const w=d.form==='powder'?r.dil:d.water;
-    return `<tr><td>${esc(d.name)} <span class="tag ${d.cat==='drug'?'b':''}">${CAT[d.cat]}</span><div class="gen">${d.pkg}${d.unit}・${esc(d.tag)}${d.form==='powder'?`<br>1個を溶かす水 <input type="number" data-dil="${i}" value="${r.dil}" min="0" step="10" style="width:64px"> mL`:''}</div></td>
+    return `<tr><td>${esc(d.name)} <span class="tag ${d.cat==='drug'?'b':''}">${CAT[d.cat]}</span><div class="gen">${d.pkg}${d.unit}・${esc(d.tag)}${d.osm?'・浸透圧'+d.osm+'mOsm/L':''}${d.form==='powder'?`<br>1個を溶かす水 <input type="number" data-dil="${i}" value="${r.dil}" min="0" step="10" style="width:64px"> mL`:''}</div></td>
      <td class="num"><input type="number" data-eq="${i}" value="${r.qty}" min="0" step="0.5" style="width:58px"></td>
      <td class="num">${fmt(d.kcal*r.qty,0)}</td><td class="num">${fmt(d.pro*r.qty,1)}</td><td class="num">${d.est&&d.form!=='powder'?'約':''}${fmt(w*r.qty,0)}</td>
      <td><button class="small del" data-edel="${i}">削除</button></td></tr>`;}).join('')
@@ -888,6 +888,8 @@ function en(){
   if(T.salt&&salt>=T.salt) W8.push(`食塩相当量が${T.salt}g/日以上です`);
   if(t.water>T.fluid*1.1) W8.push(`水分が目標（${fmt(T.fluid,0)}mL）を超えています`);
   if(I.RR.restrict && I.phase!=='stress' && t.pro>T.Pr[1]*1.05) W8.push('たんぱく質がCKDの目安を超えています');
+  const hiO=erows.filter(r=>r.qty>0&&(enBy[r.id].osm||0)>=600&&$('e_route').value!=='oral').map(r=>enBy[r.id].name+'（'+enBy[r.id].osm+'）');
+  if(hiO.length) W8.push('浸透圧が高めの製品（mOsm/L）：'+hiO.join('、')+'。経管で下痢がみられる場合は、投与速度を落とす・濃度の低い製品に変えるなどを検討');
   if(erows.some(r=>r.id==='elental'&&r.qty>0)) W8.push('エレンタールは脂肪がほとんどないため、長期使用では必須脂肪酸欠乏に注意（脂肪乳剤の併用を検討）');
   if(erows.some(r=>enBy[r.id].form==='semi'&&r.qty>0)&&$('e_route').value==='ng') W8.push('半固形製剤は胃瘻から注入します（経鼻胃管では使わない）');
   const res=$('enResult');
