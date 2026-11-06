@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>輸液 糖濃度・浸透圧比 計算ツール（薬剤科）</title>
+<style>
+:root{--navy:#1F3864;--blue:#1F6FB2;--red:#C00000;--grey:#595959;--line:#c8cdd6;--bg:#f6f7f9;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:"BIZ UDPGothic","Yu Gothic UI","Meiryo",sans-serif;color:#222;background:var(--bg);font-size:15px;}
+header{background:#fff;border-bottom:3px solid var(--navy);padding:10px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+header h1{margin:0;font-size:20px;color:var(--navy);}
+header .sub{color:var(--grey);font-size:13px;}
+main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;padding:14px 18px;max-width:1400px;margin:0 auto;}
+@media (max-width:980px){main{grid-template-columns:1fr;}}
+section{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;}
+h2{font-size:16px;color:var(--navy);margin:0 0 8px;border-bottom:2px solid var(--navy);padding-bottom:3px;}
+.addbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+select,input,button{font-family:inherit;font-size:14px;}
+select{padding:5px;min-width:320px;max-width:100%;}
+input[type=number]{width:80px;padding:4px;text-align:right;}
+input[type=text]{padding:4px;}
+button{padding:6px 12px;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:5px;cursor:pointer;}
+button.primary{background:var(--navy);color:#fff;}
+button.small{padding:3px 8px;font-size:13px;}
+button.del{border-color:var(--red);color:var(--red);}
+table{border-collapse:collapse;width:100%;}
+th,td{border:1px solid var(--line);padding:4px 6px;font-size:14px;}
+th{background:var(--navy);color:#fff;font-weight:700;}
+td.num{text-align:right;white-space:nowrap;}
+.tag{display:inline-block;font-size:11.5px;border:1px solid var(--red);color:var(--red);border-radius:3px;padding:0 4px;margin-left:4px;vertical-align:1px;}
+.tag.b{border-color:var(--blue);color:var(--blue);}
+.gen{color:var(--grey);font-size:12px;}
+.examples{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.opt{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:14px;align-items:center;}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.res-item{border:1px solid var(--line);border-radius:6px;padding:6px 8px;}
+.res-item .k{font-size:12.5px;color:var(--grey);}
+.res-item .v{font-size:20px;font-weight:700;}
+.res-item .v small{font-size:13px;font-weight:400;color:var(--grey);}
+.res-item.key{border:2px solid var(--navy);}
+.judge{border:2.5px solid var(--navy);border-radius:8px;padding:10px 12px;margin-bottom:10px;}
+.judge .title{font-size:13px;color:var(--grey);}
+.judge .big{font-size:22px;font-weight:700;margin:2px 0 4px;}
+.judge.peri{border-color:var(--blue);} .judge.peri .big{color:var(--blue);}
+.judge.cv{border-color:var(--red);} .judge.cv .big{color:var(--red);}
+.judge ul{margin:4px 0 0 18px;padding:0;font-size:14px;}
+.mix{border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:14.5px;}
+.mix b{color:var(--navy);}
+.warn{border:1.5px solid var(--red);border-radius:6px;padding:6px 10px;margin-top:6px;font-size:14px;color:#222;}
+.warn::before{content:"⚠ ";color:var(--red);font-weight:700;}
+.info{border:1.5px solid var(--blue);border-radius:6px;padding:6px 10px;margin-top:6px;font-size:14px;}
+.note{font-size:12.5px;color:var(--grey);line-height:1.6;}
+details{margin-top:12px;}
+summary{cursor:pointer;color:var(--navy);font-weight:700;}
+.master td,.master th{font-size:12.5px;padding:3px 4px;}
+.empty{color:var(--grey);text-align:center;padding:16px;}
+.custom{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px;font-size:13.5px;}
+.tabs{display:flex;gap:4px;padding:10px 18px 0;max-width:1400px;margin:0 auto;}
+.tab{border:1px solid var(--navy);border-bottom:none;border-radius:6px 6px 0 0;background:#fff;color:var(--navy);padding:8px 14px;font-weight:700;}
+.tab.active{background:var(--navy);color:#fff;}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;}
+.fgrid label{display:flex;flex-direction:column;font-size:13px;color:var(--grey);gap:2px;}
+.fgrid label select,.fgrid label input{min-width:0;width:100%;color:#222;}
+.fgrid .full{grid-column:1/-1;}
+.chk{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin:4px 0;}
+.chk label{display:flex;align-items:center;gap:4px;}
+fieldset{border:1px solid var(--line);border-radius:6px;margin:8px 0;padding:6px 10px;}
+legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
+.tgt td{font-size:14px;} .tgt td:first-child{color:var(--grey);width:42%;}
+.badge{display:inline-block;border:1.5px solid var(--red);color:var(--red);border-radius:4px;padding:1px 6px;font-weight:700;font-size:13px;}
+.badge.ok{border-color:var(--blue);color:var(--blue);}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;}
+.plan{border:2px solid var(--navy);border-radius:8px;padding:10px 12px;}
+.plan h3{margin:0 0 6px;font-size:16px;color:var(--navy);}
+.plan .rx{font-size:15px;line-height:1.6;margin:0 0 6px;padding-left:18px;}
+.plan table td{font-size:13.5px;padding:3px 6px;}
+.plan table td:first-child,.plan table td.num{white-space:nowrap;}
+.plan .pnote{font-size:13px;line-height:1.55;margin:6px 0 0;padding-left:18px;color:#333;}
+.ach{font-size:12px;color:var(--grey);}
+.ach.lo{color:var(--red);font-weight:700;}
+@media (max-width:600px){
+  .tabs{padding:8px 8px 0;} .tab{flex:1;font-size:13px;padding:8px 6px;}
+  .fgrid{grid-template-columns:1fr 1fr;}
+  .plans{grid-template-columns:1fr;}
+}
+@media (max-width:600px){
+  body{font-size:15px;}
+  header{padding:8px 12px;} header h1{font-size:17px;}
+  main{padding:8px;gap:10px;}
+  section{padding:10px;}
+  select{min-width:0;width:100%;font-size:16px;}
+  input[type=number],input[type=text]{font-size:16px;}
+  .addbar input[type=number]{width:70px;}
+  .custom input[type=text]{width:100% !important;}
+  .custom input[type=number]{width:64px;}
+  #rowsTbl th:nth-child(4),#rowsTbl td:nth-child(4),#rowsTbl th:nth-child(5),#rowsTbl td:nth-child(5){display:none;}
+  #rowsTbl input[type=number]{width:62px;}
+  .res-item .v{font-size:18px;}
+  .judge .big{font-size:20px;}
+  button{padding:8px 12px;}
+}
+@media print{
+  header .noprint,.addbar,.examples,.custom,button,details{display:none !important;}
+  body{background:#fff;} main{grid-template-columns:1fr 1fr;} section{border:none;}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>輸液計算・NST投与設計ツール</h1>
+  <span class="sub">当院採用輸液（2026年11月時点）／薬剤科　※計算値は目安です。最終判断は薬剤師・NSTが行ってください。</span>
+</header>
+<nav class="tabs">
+  <button class="tab active" data-tab="calc">① 混合計算（糖濃度・浸透圧比）</button>
+  <button class="tab" data-tab="nst">② NST投与設計</button>
+</nav>
+<main id="tab-calc">
+<section>
+  <h2>1．混ぜる薬剤を入力</h2>
+  <div class="addbar">
+    <select id="drugSel"></select>
+    <input type="number" id="addQty" value="1" min="0" step="0.1" title="本・袋数">
+    <span>本/袋</span>
+    <button class="primary" id="addBtn">追加</button>
+  </div>
+  <div class="custom">
+    <span>採用薬にない薬剤：</span>
+    <input type="text" id="cName" placeholder="薬剤名" style="width:140px">
+    <input type="number" id="cVol" placeholder="mL" step="0.1"> mL
+    糖 <input type="number" id="cGlu" placeholder="g" step="0.1"> g
+    浸透圧比 <input type="number" id="cOsm" placeholder="比" step="0.1">
+    <button class="small" id="cAdd">追加</button>
+  </div>
+  <table id="rowsTbl" style="margin-top:10px">
+    <thead><tr><th style="width:44%">薬剤</th><th>本/袋</th><th>mL</th><th>糖(g)</th><th>浸透圧比</th><th></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div class="examples">
+    <span class="note" style="align-self:center">例：</span>
+    <button class="small" data-ex="1">50%ブドウ糖0.5袋＋ソルデム1 500mL</button>
+    <button class="small" data-ex="2">50%ブドウ糖1袋＋ソルデム1 500mL</button>
+    <button class="small" data-ex="3">エルネオパNF2号＋KCL 20mEq</button>
+    <button class="small" data-ex="4">ハイカリックRF＋アミパレン×2</button>
+    <button class="small del" id="clearBtn">すべて消去</button>
+  </div>
+  <div class="opt">
+    <label>体重 <input type="number" id="wt" min="0" step="0.1"> kg</label>
+    <label>投与時間 <input type="number" id="hr" min="0" step="0.5"> 時間</label>
+    <span class="note">（入れると投与速度もチェックします）</span>
+    <button class="small" onclick="window.print()">印刷</button>
+  </div>
+
+  <details>
+    <summary>計算方法と注意</summary>
+    <div class="note">
+      ・<b>糖濃度</b>＝ブドウ糖の合計(g)÷総液量(mL)×100。マルトース・キシリトールは「その他の糖質」として別に表示します。<br>
+      ・<b>浸透圧比（推定）</b>＝各薬剤の浸透圧比（添付文書の「約」の値）を液量で按分した概算です（Σ液量×浸透圧比÷総液量）。実測値とは異なることがあります。<br>
+      ・<b>末梢の目安</b>：浸透圧比 3以下 かつ 糖濃度 12.5％以下。浸透圧比約3が末梢静脈から投与できる限界とされています（PMDA医療安全情報No.67、静脈経腸栄養ガイドライン第3版）。<br>
+      ・大塚糖液50％の浸透圧比は、添付文書は約11、PMDA医療安全情報No.67は約12です。安全側の<b>12</b>で計算しています。<br>
+      ・プロテアミン12は浸透圧比 約5のため末梢の目安を超えますが、PMDA医療安全情報では「濃度や用量で投与経路を変える必要がある輸液」に分類されています。当院では中心静脈専用製剤として扱います。<br>
+      ・カリウム濃度は KCL・アスパラギン酸カリウム製剤の添付文書の「40mEq/L以下に希釈」、投与速度は「20mEq/hr以下」を目安に警告します。<br>
+      ・ブドウ糖の投与速度は、ブドウ糖注射液の添付文書の「0.5g/kg/hr以下」を目安に警告し、5mg/kg/分を超える場合は高血糖に注意するよう表示します。<br>
+      ・薬剤データは下の「薬剤データ一覧」にあります。このファイルをメモ帳で開き、<code>DRUGS</code> の行を書き換えると修正・追加できます。
+    </div>
+  </details>
+</section>
+
+<section>
+  <h2>2．計算結果</h2>
+  <div id="result"><div class="empty">左で薬剤を追加すると、ここに結果が出ます。</div></div>
+</section>
+
+<section style="grid-column:1/-1">
+  <details>
+    <summary>薬剤データ一覧（添付文書の値・1本/1袋あたり）</summary>
+    <div style="overflow-x:auto;margin-top:6px">
+    <table class="master" id="masterTbl"></table>
+    </div>
+    <p class="note">出典：各製剤の添付文書（PMDA 医療用医薬品情報）、PMDA医療安全情報No.67（2024年1月）。アミノ酸製剤で熱量の記載がないものはアミノ酸 4kcal/g で計算。イントラリポスは院内資料「輸液製剤の種類」の値。値の確認日：2026年11月6日。</p>
+  </details>
+</section>
+</main>
+
+<main id="tab-nst" style="display:none">
+<section>
+  <h2>1．患者の情報（成人）</h2>
+  <div class="fgrid">
+    <label>性別<select id="n_sex"><option value="m">男性</option><option value="f">女性</option></select></label>
+    <label>年齢（歳）<input type="number" id="n_age" min="18" max="110" value="75"></label>
+    <label>身長（cm）<input type="number" id="n_ht" min="100" max="220" step="0.1" value="160"></label>
+    <label>体重（kg）<input type="number" id="n_wt" min="20" max="250" step="0.1" value="50"></label>
+    <label class="full">計算に使う体重
+      <select id="n_wsel"><option value="auto">自動（BMI25以上は標準体重、それ以外は実測体重）</option><option value="act">実測体重</option><option value="ibw">標準体重（BMI22）</option></select></label>
+  </div>
+  <fieldset><legend>必要エネルギー</legend>
+    <div class="chk"><label><input type="radio" name="n_meth" value="hb" checked> ハリス・ベネディクト式×活動係数×ストレス係数</label><label><input type="radio" name="n_meth" value="simple"> 簡易式（kcal/kg）</label></div>
+    <div class="fgrid">
+      <label id="lb_af">活動係数<select id="n_af">
+        <option value="1.0">1.0 寝たきり（意識低下・安静）</option><option value="1.1">1.1 寝たきり（覚醒）</option>
+        <option value="1.2" selected>1.2 ベッド上安静</option><option value="1.3">1.3 トイレ歩行・ベッド外活動</option><option value="1.4">1.4 リハビリ中</option></select></label>
+      <label id="lb_sf">ストレス係数<select id="n_sf">
+        <option value="1.0" selected>1.0 侵襲なし・術後（合併症なし）</option><option value="1.1">1.1 小手術・癌</option>
+        <option value="1.2">1.2 大手術・腹膜炎・敗血症（軽〜中等度）</option><option value="1.3">1.3 重症感染症・多発外傷</option>
+        <option value="1.5">1.5 多臓器不全・熱傷（目安）</option></select></label>
+      <label id="lb_kk" style="display:none">kcal/kg<select id="n_kk"><option>20</option><option selected>25</option><option>30</option><option>35</option></select></label>
+      <label>病期（アミノ酸量・糖の上限に使用）<select id="n_phase"><option value="stable">安定期</option><option value="stress">侵襲期（術後・感染症など）</option></select></label>
+    </div>
+  </fieldset>
+  <fieldset><legend>水分・経口摂取・投与経路</legend>
+    <div class="fgrid">
+      <label>水分（mL/kg/日）<select id="n_fl"><option>25</option><option selected>30</option><option>35</option><option>40</option></select></label>
+      <label>水分の上限（mL/日・任意）<input type="number" id="n_flmax" min="0" step="50" placeholder="制限があれば入力"></label>
+      <label>経口・経腸の摂取（kcal/日）<input type="number" id="n_okcal" min="0" step="10" value="0"></label>
+      <label>経口・経腸のたんぱく（g/日）<input type="number" id="n_oprot" min="0" step="1" value="0"></label>
+      <label>投与経路<select id="n_route"><option value="both">末梢と中心静脈を比べる</option><option value="ppn">末梢静脈のみ</option><option value="tpn">中心静脈のみ</option></select></label>
+      <label>脂肪乳剤（イントラリポス）<select id="n_lip"><option value="yes">使う</option><option value="no">使わない（禁忌・制限あり）</option></select></label>
+    </div>
+  </fieldset>
+  <fieldset><legend>病態</legend>
+    <div class="fgrid">
+      <label>腎機能<select id="n_renal"><option value="no">問題なし</option><option value="ckd">保存期CKD（透析なし・G3b以降）</option><option value="hd">透析中</option></select></label>
+      <label>肝機能<select id="n_liver"><option value="no">問題なし</option><option value="lc">肝硬変・肝不全</option><option value="he">肝性脳症あり</option></select></label>
+    </div>
+    <div class="chk"><label><input type="checkbox" id="n_dm"> 糖尿病・高血糖</label></div>
+  </fieldset>
+  <fieldset><legend>リフィーディング症候群のリスク（NICE基準）</legend>
+    <div class="note">次のうち<b>1つ</b>あれば高リスク</div>
+    <div class="chk">
+      <label><input type="checkbox" disabled id="r_bmi16"> BMI 16未満（自動）</label>
+      <label><input type="checkbox" id="r_wl15"> 3〜6か月で15％超の体重減少</label>
+      <label><input type="checkbox" id="r_nf10"> 10日以上ほとんど摂取なし</label>
+      <label><input type="checkbox" id="r_lyte"> 栄養開始前から低K・低P・低Mg</label>
+    </div>
+    <div class="note">次のうち<b>2つ</b>以上あれば高リスク</div>
+    <div class="chk">
+      <label><input type="checkbox" disabled id="r_bmi185"> BMI 18.5未満（自動）</label>
+      <label><input type="checkbox" id="r_wl10"> 3〜6か月で10％超の体重減少</label>
+      <label><input type="checkbox" id="r_nf5"> 5日以上ほとんど摂取なし</label>
+      <label><input type="checkbox" id="r_hx"> アルコール多飲、インスリン・化学療法・制酸剤・利尿薬の使用歴</label>
+    </div>
+    <div class="chk"><label><input type="checkbox" id="r_nf15"> 15日以上ほとんど摂取なし（BMI14未満とあわせて超高リスク）</label></div>
+  </fieldset>
+</section>
+
+<section>
+  <h2>2．目標量</h2>
+  <div id="nstTarget"></div>
+</section>
+
+<section style="grid-column:1/-1">
+  <h2>3．処方案（当院採用薬の組み合わせ）</h2>
+  <div id="nstPlans"></div>
+  <details>
+    <summary>投与設計の計算方法と出典</summary>
+    <div class="note">
+      ・<b>ハリス・ベネディクト式</b>：男性 66.47＋13.75×体重＋5.0×身長−6.76×年齢、女性 655.1＋9.56×体重＋1.85×身長−4.68×年齢。活動係数・ストレス係数は目安で、病態に応じて見直してください。<br>
+      ・<b>簡易式</b>：25〜30kcal/kg/日が一般的な目安。<br>
+      ・<b>アミノ酸</b>：安定期 0.8〜1.0g/kg（65歳以上は1.0〜1.2）、侵襲期 1.2〜1.5g/kg、保存期CKD（G3b以降）0.6〜0.8g/kg、透析 0.9〜1.2g/kg（日本腎臓学会 食事療法基準2014）、肝硬変 1.0〜1.5g/kg。<br>
+      ・<b>水分</b>：25〜40mL/kg/日（標準30mL/kg）。<br>
+      ・<b>糖の上限</b>：5mg/kg/分（侵襲期・糖尿病は4mg/kg/分）を24時間持続投与で換算。<br>
+      ・<b>脂肪</b>：総エネルギーの20〜30％が目安、1.0g/kg/日以下、投与速度0.1g/kg/時以下。<br>
+      ・<b>NPC/N比</b>：平常時150〜180、侵襲時70〜120、腎不全（透析前）180〜300が目安。窒素＝アミノ酸÷6.25。<br>
+      ・<b>リフィーディング症候群</b>：NICE基準で高リスクなら開始量10kcal/kg/日（超高リスクは5kcal/kg/日）から4〜7日かけて目標へ。ビタミンB1を補充し、P・K・Mgを頻回に測定。<br>
+      ・処方案は、採用薬の組み合わせを総当たりで計算し、目標エネルギー・アミノ酸に最も近く、水分と糖の上限を超えないものを選んでいます。
+    </div>
+  </details>
+</section>
+</main>
+
+<script>
+// ====== 薬剤データ（1本・1袋あたり）=====================================
+// vol:mL, glu:ブドウ糖g, sug:その他糖質g, aa:アミノ酸g, fat:脂肪g, na/k:mEq, kcal, osm:浸透圧比
+// cv:中心静脈専用製剤, nomix:他剤混注不可, extra:その他の電解質（警告判定用）
+const DRUGS = [
+ // 糖液
+ {id:'glu5_20',  cat:'糖液', name:'大塚糖液5%', spec:'20mL管', gen:'ブドウ糖', vol:20, glu:1, kcal:4, osm:1},
+ {id:'glu5_50',  cat:'糖液', name:'大塚糖液5%', spec:'50mL瓶', gen:'ブドウ糖', vol:50, glu:2.5, kcal:10, osm:1},
+ {id:'glu5_100', cat:'糖液', name:'大塚糖液5%', spec:'100mL瓶', gen:'ブドウ糖', vol:100, glu:5, kcal:20, osm:1},
+ {id:'glu5_250', cat:'糖液', name:'大塚糖液5%', spec:'250mL袋', gen:'ブドウ糖', vol:250, glu:12.5, kcal:50, osm:1},
+ {id:'tglu5_500',cat:'糖液', name:'テルモ糖注5%', spec:'500mL袋', gen:'ブドウ糖', vol:500, glu:25, kcal:100, osm:0.9},
+ {id:'glu20_20', cat:'糖液', name:'ブドウ糖注20%PL「フソー」', spec:'20mL管', gen:'ブドウ糖', vol:20, glu:4, kcal:16, osm:4},
+ {id:'glu50_20', cat:'糖液', name:'大塚糖液50%', spec:'20mL管', gen:'ブドウ糖', vol:20, glu:10, kcal:40, osm:12, note:'浸透圧比は安全側の12（添付文書は約11）'},
+ {id:'glu50_200',cat:'糖液', name:'大塚糖液50%', spec:'200mL袋', gen:'ブドウ糖', vol:200, glu:100, kcal:400, osm:12, cv:true, note:'添付文書：中心静脈内に持続点滴注入。浸透圧比は安全側の12（添付文書は約11）'},
+ {id:'kylit_500',cat:'糖液', name:'キリット注5%', spec:'500mL袋', gen:'キシリトール', vol:500, sug:25, sugName:'キシリトール', kcal:100, osm:1},
+ // 電解質輸液
+ {id:'sol1_200', cat:'電解質輸液', name:'ソルデム1輸液', spec:'200mL', gen:'開始液', vol:200, glu:5.2, na:18, kcal:20.8, osm:1},
+ {id:'sol1_500', cat:'電解質輸液', name:'ソルデム1輸液', spec:'500mL', gen:'開始液', vol:500, glu:13, na:45, kcal:52, osm:1},
+ {id:'sol3a_200',cat:'電解質輸液', name:'ソルデム3A輸液', spec:'200mL', gen:'維持液', vol:200, glu:8.6, na:7, k:4, kcal:34.4, osm:1},
+ {id:'sol3a_500',cat:'電解質輸液', name:'ソルデム3A輸液', spec:'500mL', gen:'維持液', vol:500, glu:21.5, na:17.5, k:10, kcal:86, osm:1},
+ {id:'solitaxh', cat:'電解質輸液', name:'ソリタックス-H輸液', spec:'500mL', gen:'糖加維持液（糖12.5%）', vol:500, glu:62.5, na:25, k:15, kcal:250, osm:3, extra:{ca:2.5,mg:1.5,p:5}},
+ {id:'tmr',      cat:'電解質輸液', name:'ソルラクトTMR輸液', spec:'500mL', gen:'マルトース加乳酸リンゲル液', vol:500, sug:25, sugName:'マルトース', na:65.5, k:2, kcal:100, osm:1, extra:{ca:1.5}},
+ {id:'veend',    cat:'電解質輸液', name:'ヴィーンD輸液', spec:'500mL', gen:'ブドウ糖加酢酸リンゲル液', vol:500, glu:25, na:65, k:2, kcal:100, osm:2, extra:{ca:1.5}},
+ {id:'veenf',    cat:'電解質輸液', name:'ヴィーンF輸液', spec:'500mL', gen:'酢酸リンゲル液', vol:500, na:65, k:2, osm:0.9, extra:{ca:1.5}},
+ {id:'ns_50',    cat:'電解質輸液', name:'大塚生食注', spec:'50mL', gen:'生理食塩液', vol:50, na:7.7, osm:1},
+ {id:'ns_100',   cat:'電解質輸液', name:'大塚生食注', spec:'100mL', gen:'生理食塩液', vol:100, na:15.4, osm:1},
+ {id:'ns_250',   cat:'電解質輸液', name:'大塚生食注', spec:'250mL', gen:'生理食塩液', vol:250, na:38.5, osm:1},
+ {id:'ns_500',   cat:'電解質輸液', name:'大塚生食注', spec:'500mL', gen:'生理食塩液', vol:500, na:77, osm:1},
+ {id:'ns_1000',  cat:'電解質輸液', name:'大塚生食注／生理食塩液バッグ「フソー」', spec:'1L', gen:'生理食塩液', vol:1000, na:154, osm:1},
+ // 栄養輸液
+ {id:'bfluid',   cat:'栄養輸液（末梢用）', name:'ビーフリード輸液', spec:'500mL', gen:'アミノ酸・糖・電解質・B1液', vol:500, glu:37.5, aa:15, na:17.5, k:10, kcal:210, osm:3, extra:{ca:2.5,mg:2.5,p:5}},
+ {id:'enefluid', cat:'栄養輸液（末梢用）', name:'エネフリード輸液', spec:'1100mL', gen:'アミノ酸・糖・電解質・脂肪・水溶性ビタミン液', vol:1100, glu:75, aa:30, fat:20, na:35, k:20, kcal:620, osm:3, nomix:true, note:'添付文書：他の薬剤を混注しないこと'},
+ {id:'elneo1',   cat:'高カロリー輸液（中心静脈用）', name:'エルネオパNF1号輸液', spec:'1000mL', gen:'高カロリー輸液用キット製剤', vol:1000, glu:120, aa:20, na:50, k:22, kcal:560, osm:4, cv:true, kit:true},
+ {id:'elneo2',   cat:'高カロリー輸液（中心静脈用）', name:'エルネオパNF2号輸液', spec:'1000mL', gen:'高カロリー輸液用キット製剤', vol:1000, glu:175, aa:30, na:50, k:27, kcal:820, osm:6, cv:true, kit:true},
+ {id:'hicaliq',  cat:'高カロリー輸液（中心静脈用）', name:'ハイカリックRF輸液', spec:'500mL', gen:'高カロリー輸液用基本液', vol:500, glu:250, na:25, k:0, kcal:1000, osm:11, cv:true, extra:{ca:3,mg:3}, note:'カリウム・リンを含まない。ビタミンB1の併用が必要'},
+ // 脂肪乳剤（他の輸液と混合しない）
+ {id:'lip50',    cat:'脂肪乳剤（混合しない・単独投与）', name:'イントラリポス輸液20%', spec:'50mL', gen:'ダイズ油', vol:50, fat:10, kcal:100, osm:1, sep:true},
+ {id:'lip100',   cat:'脂肪乳剤（混合しない・単独投与）', name:'イントラリポス輸液20%', spec:'100mL', gen:'ダイズ油', vol:100, fat:20, kcal:200, osm:1, sep:true},
+ // アミノ酸
+ {id:'prote12',  cat:'アミノ酸製剤', name:'プロテアミン12注射液', spec:'200mL', gen:'総合アミノ酸製剤12%', vol:200, aa:22.73, na:30, kcal:90.9, osm:5, cv:true, note:'浸透圧比約5。当院では中心静脈専用製剤として扱う'},
+ {id:'amiparen', cat:'アミノ酸製剤', name:'アミパレン輸液', spec:'300mL', gen:'総合アミノ酸製剤10%', vol:300, aa:30, na:0.6, kcal:120, osm:3},
+ {id:'neoamiyu', cat:'アミノ酸製剤', name:'ネオアミユー輸液', spec:'200mL', gen:'腎不全用総合アミノ酸', vol:200, aa:11.84, na:0.4, kcal:47.4, osm:2},
+ {id:'aminol200',cat:'アミノ酸製剤', name:'アミノレバン点滴静注', spec:'200mL', gen:'肝性脳症改善アミノ酸', vol:200, aa:15.98, na:3, kcal:63.9, osm:3},
+ {id:'aminol500',cat:'アミノ酸製剤', name:'アミノレバン点滴静注', spec:'500mL', gen:'肝性脳症改善アミノ酸', vol:500, aa:39.93, na:7, kcal:159.7, osm:3},
+ // 補正液
+ {id:'kcl20',    cat:'電解質補正液', name:'KCL注20mEqキット「テルモ」', spec:'20mL', gen:'塩化カリウム', vol:20, k:20, osm:6, additive:true},
+ {id:'aspk10',   cat:'電解質補正液', name:'アスパラギン酸カリウム注10mEqキット「テルモ」', spec:'10mL', gen:'L-アスパラギン酸カリウム', vol:10, k:10, osm:6, additive:true},
+ {id:'nacl10',   cat:'電解質補正液', name:'大塚食塩注10%', spec:'20mL', gen:'塩化ナトリウム', vol:20, na:34, osm:11, additive:true},
+ {id:'phosna',   cat:'電解質補正液', name:'リン酸Na補正液0.5mmol/mL', spec:'20mL', gen:'リン酸ナトリウム', vol:20, na:15, osm:3, additive:true, extra:{p:10}},
+ {id:'mgso4',    cat:'電解質補正液', name:'硫酸Mg補正液1mEq/mL', spec:'20mL', gen:'硫酸マグネシウム', vol:20, osm:2, additive:true, extra:{mg:20}},
+ {id:'calcicol', cat:'電解質補正液', name:'カルチコール注射液8.5%', spec:'5mL', gen:'グルコン酸カルシウム', vol:5, osm:0.9, additive:true, extra:{ca:1.95}},
+];
+// =====================================================================
+
+const F = {glu:0,sug:0,aa:0,fat:0,na:0,k:0,kcal:0};
+const byId = Object.fromEntries(DRUGS.map(d=>[d.id,d]));
+let rows = []; // {id, qty} or {custom:{name,vol,glu,osm}, qty:1}
+
+function v(d,key){return d[key]||0;}
+function fmt(x,dig=1){ if(!isFinite(x)) return '-'; return (Math.round(x*Math.pow(10,dig))/Math.pow(10,dig)).toLocaleString('ja-JP',{minimumFractionDigits:dig,maximumFractionDigits:dig}); }
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function label(d){return d.name+' '+d.spec;}
+
+// セレクト作成
+(function(){
+  const sel=document.getElementById('drugSel'); const cats=[...new Set(DRUGS.map(d=>d.cat))];
+  cats.forEach(c=>{ const g=document.createElement('optgroup'); g.label=c;
+    DRUGS.filter(d=>d.cat===c).forEach(d=>{ const o=document.createElement('option'); o.value=d.id;
+      o.textContent=label(d)+'（'+d.gen+'）'+(d.cv?' ★中心静脈専用':''); g.appendChild(o);});
+    sel.appendChild(g);});
+  // マスタ表
+  const t=document.getElementById('masterTbl');
+  let h='<tr><th>区分</th><th>薬剤名・規格</th><th>成分・分類</th><th>容量mL</th><th>ブドウ糖g</th><th>他糖質g</th><th>アミノ酸g</th><th>脂肪g</th><th>Na mEq</th><th>K mEq</th><th>熱量kcal</th><th>浸透圧比</th><th>備考</th></tr>';
+  DRUGS.forEach(d=>{h+=`<tr><td>${esc(d.cat)}</td><td>${esc(label(d))}${d.cv?'<span class="tag">中心静脈専用</span>':''}</td><td>${esc(d.gen)}</td><td class="num">${d.vol}</td><td class="num">${v(d,'glu')||''}</td><td class="num">${d.sug?d.sug+'（'+d.sugName+'）':''}</td><td class="num">${v(d,'aa')||''}</td><td class="num">${v(d,'fat')||''}</td><td class="num">${v(d,'na')||''}</td><td class="num">${v(d,'k')||''}</td><td class="num">${v(d,'kcal')||''}</td><td class="num">約${d.osm}</td><td>${esc(d.note||'')}</td></tr>`;});
+  t.innerHTML=h;
+})();
+
+function addRow(id,qty){ rows.push({id,qty:Number(qty)||0}); render(); }
+document.getElementById('addBtn').onclick=()=>addRow(document.getElementById('drugSel').value, document.getElementById('addQty').value);
+document.getElementById('cAdd').onclick=()=>{
+  const name=document.getElementById('cName').value.trim()||'その他の薬剤';
+  const vol=Number(document.getElementById('cVol').value)||0;
+  if(vol<=0){alert('mLを入力してください');return;}
+  rows.push({custom:{name,vol,glu:Number(document.getElementById('cGlu').value)||0,osm:Number(document.getElementById('cOsm').value)||1},qty:1});
+  ['cName','cVol','cGlu','cOsm'].forEach(i=>document.getElementById(i).value=''); render();
+};
+document.getElementById('clearBtn').onclick=()=>{rows=[];render();};
+document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{
+  const ex={1:[['glu50_200',0.5],['sol1_500',1]],2:[['glu50_200',1],['sol1_500',1]],3:[['elneo2',1],['kcl20',1]],4:[['hicaliq',1],['amiparen',2]]}[b.dataset.ex];
+  rows=ex.map(([id,qty])=>({id,qty})); render();
+});
+['wt','hr'].forEach(i=>document.getElementById(i).oninput=renderResult);
+
+function rowInfo(r){
+  if(r.custom){const c=r.custom; return {name:c.name,gen:'手入力',ml:c.vol*r.qty,glu:c.glu*r.qty,sug:0,aa:0,fat:0,na:0,k:0,kcal:c.glu*4*r.qty,osm:c.osm,cv:false,custom:true};}
+  const d=byId[r.id]; const q=r.qty;
+  return {d,name:label(d),gen:d.gen,ml:d.vol*q,glu:v(d,'glu')*q,sug:v(d,'sug')*q,aa:v(d,'aa')*q,fat:v(d,'fat')*q,na:v(d,'na')*q,k:v(d,'k')*q,kcal:v(d,'kcal')*q,osm:d.osm,cv:!!d.cv};
+}
+
+function render(){
+  const tb=document.getElementById('rows');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="6" class="empty">薬剤がありません</td></tr>';}
+  else tb.innerHTML=rows.map((r,i)=>{const x=rowInfo(r);
+    const qtyCell=r.custom?'<td class="num">-</td>':`<td class="num"><input type="number" min="0" step="0.1" value="${r.qty}" data-i="${i}" class="qty"></td>`;
+    const mlCell=r.custom?`<td class="num">${fmt(x.ml,1)}</td>`:`<td class="num"><input type="number" min="0" step="1" value="${+x.ml.toFixed(1)}" data-i="${i}" class="ml"></td>`;
+    return `<tr><td>${esc(x.name)}${x.cv?'<span class="tag">中心静脈専用</span>':''}<br><span class="gen">${esc(x.gen)}</span></td>${qtyCell}${mlCell}<td class="num">${fmt(x.glu,1)}</td><td class="num">約${x.osm}</td><td><button class="small del" data-del="${i}">削除</button></td></tr>`;}).join('');
+  tb.querySelectorAll('.qty').forEach(e=>e.onchange=()=>{rows[e.dataset.i].qty=Number(e.value)||0;render();});
+  tb.querySelectorAll('.ml').forEach(e=>e.onchange=()=>{const r=rows[e.dataset.i];r.qty=(Number(e.value)||0)/byId[r.id].vol;render();});
+  tb.querySelectorAll('[data-del]').forEach(e=>e.onclick=()=>{rows.splice(e.dataset.del,1);render();});
+  renderResult();
+}
+
+function renderResult(){
+  const box=document.getElementById('result');
+  const xs=rows.map(rowInfo).filter(x=>x.ml>0);
+  if(!xs.length){box.innerHTML='<div class="empty">左で薬剤を追加すると、ここに結果が出ます。</div>';return;}
+  const S=k=>xs.reduce((a,x)=>a+x[k],0);
+  const V=S('ml'), G=S('glu'), SG=S('sug'), AA=S('aa'), FAT=S('fat'), NA=S('na'), K=S('k'), KC=S('kcal');
+  const OSM=xs.reduce((a,x)=>a+x.ml*x.osm,0)/V;
+  const gPct=G/V*100;
+  const hasCV=xs.some(x=>x.cv);
+  const cvNames=[...new Set(xs.filter(x=>x.cv).map(x=>x.d.name))];
+  const ex=k=>xs.reduce((a,x)=>a+(x.d&&x.d.extra&&x.d.extra[k]?x.d.extra[k]*(x.ml/x.d.vol):0),0);
+
+  // 判定
+  const reasons=[]; let cls,big;
+  const osmOver=OSM>3, gluOver=gPct>12.5;
+  if(hasCV) reasons.push('中心静脈専用製剤を含む（'+cvNames.join('、')+'）');
+  reasons.push('浸透圧比（推定）'+fmt(OSM,2)+(osmOver?' ＞ 3（末梢の目安を超える）':' ≦ 3'));
+  reasons.push('糖濃度 '+fmt(gPct,1)+'％'+(gluOver?' ＞ 12.5％（末梢の目安を超える）':' ≦ 12.5％'));
+  if(hasCV||osmOver||gluOver){cls='cv';big='中心静脈から投与';
+    if(hasCV && !osmOver && !gluOver) reasons.push('混ぜた後の濃度は目安内ですが、製剤が中心静脈専用のため中心静脈から投与（PMDA医療安全情報No.67・添付文書）');}
+  else {cls='peri';big='末梢から投与可（目安内）';
+    if(OSM>2.7) reasons.push('上限（3）に近いので、これ以上濃くしない');}
+
+  // 無菌調製
+  let mixHtml;
+  const nItems=xs.length;
+  if(hasCV && nItems>=2) mixHtml='<b>薬剤科で無菌調製の対象</b>（中心静脈専用製剤に注射薬を混ぜる）<br><span class="note">締切（前日15:30）後・休日夜間は薬品のまま払い出し、病棟で投与直前に混合</span>';
+  else if(hasCV) mixHtml='<b>混ぜる薬なし</b>：薬剤科での調製は不要'+(xs[0].d&&xs[0].d.kit?'（病棟で隔壁を開通）':'');
+  else mixHtml='<b>病棟で混注</b>（中心静脈専用製剤を含まないため、薬剤科の無菌調製の対象外）';
+
+  // 警告
+  const W=[];
+  const kPerL=K/V*1000;
+  if(K>0 && kPerL>40) W.push('カリウム濃度 '+fmt(kPerL,1)+' mEq/L：KCL・アスパラギン酸カリウム製剤の添付文書は「40mEq/L以下に希釈」');
+  if(xs.some(x=>x.d&&x.d.nomix) && nItems>=2) W.push('エネフリード輸液：添付文書で「他の薬剤を混注しないこと」とされています');
+  if(ex('p')>0 && (ex('ca')>0||ex('mg')>0) && xs.some(x=>x.d&&x.d.additive&&(x.d.extra&&(x.d.extra.p||x.d.extra.ca||x.d.extra.mg))))
+    W.push('リン酸塩とカルシウム・マグネシウムが同じ袋に入っています。沈殿のおそれがあるため、配合変化を確認してください');
+  if(xs.some(x=>x.d&&x.d.sep) && nItems>=2) W.push('イントラリポス（脂肪乳剤）は他の輸液と混合せず、単独で投与してください（計算上の合計として表示しています）');
+  if(xs.some(x=>x.d&&x.d.id==='hicaliq')) W.push('ハイカリックRF：ビタミンB1の併用が必要。カリウム・リンを含みません');
+  if(OSM>3 && OSM<=3.3 && !hasCV) W.push('浸透圧比（推定）が3をわずかに超えています。浸透圧比 約3の輸液（ソリタックス-H、ビーフリードなど）は少量の追加でも3を超える計算になります。推定値のため、薬剤師が判断してください');
+  if(xs.some(x=>x.custom)) W.push('手入力の薬剤は、入力した糖量・浸透圧比で計算しています');
+  const wt=Number(document.getElementById('wt').value), hr=Number(document.getElementById('hr').value);
+  let rateHtml='';
+  if(hr>0){
+    const kRate=K/hr; const mlh=V/hr;
+    rateHtml+=`<div class="res-item"><div class="k">投与速度</div><div class="v">${fmt(mlh,1)} <small>mL/時</small></div></div>`;
+    if(K>0){ rateHtml+=`<div class="res-item"><div class="k">カリウム投与速度</div><div class="v">${fmt(kRate,1)} <small>mEq/時</small></div></div>`;
+      if(kRate>20) W.push('カリウム投与速度 '+fmt(kRate,1)+' mEq/時：添付文書は「20mEq/hrを超えないこと」'); }
+    if(wt>0 && G>0){ const gkh=G/wt/hr; const mgkm=G*1000/wt/(hr*60);
+      rateHtml+=`<div class="res-item"><div class="k">ブドウ糖投与速度</div><div class="v">${fmt(gkh,2)} <small>g/kg/時</small></div><div class="note">${fmt(mgkm,1)} mg/kg/分</div></div>`;
+      if(gkh>0.5) W.push('ブドウ糖投与速度 '+fmt(gkh,2)+' g/kg/時：ブドウ糖注射液の添付文書は「0.5g/kg/hr以下」');
+      else if(mgkm>5) W.push('ブドウ糖投与速度 '+fmt(mgkm,1)+' mg/kg/分：5mg/kg/分を超えています。高血糖に注意'); }
+  }
+  const NPC=KC-AA*4;
+
+  box.innerHTML=`
+   <div class="judge ${cls}"><div class="title">投与経路の目安</div><div class="big">${big}</div><ul>${reasons.map(r=>'<li>'+esc(r)+'</li>').join('')}</ul></div>
+   <div class="mix">${mixHtml}</div>
+   <div class="res-grid">
+     <div class="res-item key"><div class="k">総液量</div><div class="v">${fmt(V,1)} <small>mL</small></div></div>
+     <div class="res-item key"><div class="k">浸透圧比（推定）</div><div class="v">${fmt(OSM,2)}</div><div class="note">目安：3以下で末梢可</div></div>
+     <div class="res-item key"><div class="k">ブドウ糖</div><div class="v">${fmt(G,1)} <small>g</small></div></div>
+     <div class="res-item key"><div class="k">糖濃度（ブドウ糖）</div><div class="v">${fmt(gPct,1)} <small>％</small></div><div class="note">目安：12.5％以下で末梢可</div></div>
+     ${SG>0?`<div class="res-item"><div class="k">その他の糖質</div><div class="v">${fmt(SG,1)} <small>g</small></div><div class="note">${esc([...new Set(xs.filter(x=>x.sug>0).map(x=>x.d.sugName))].join('・'))}（${fmt(SG/V*100,1)}％）</div></div>`:''}
+     <div class="res-item"><div class="k">総熱量</div><div class="v">${fmt(KC,0)} <small>kcal</small></div>${AA>0?`<div class="note">非蛋白熱量 ${fmt(NPC,0)} kcal</div>`:''}</div>
+     ${AA>0?`<div class="res-item"><div class="k">アミノ酸</div><div class="v">${fmt(AA,1)} <small>g</small></div></div>`:''}
+     ${FAT>0?`<div class="res-item"><div class="k">脂肪</div><div class="v">${fmt(FAT,1)} <small>g</small></div></div>`:''}
+     <div class="res-item"><div class="k">Na</div><div class="v">${fmt(NA,1)} <small>mEq</small></div><div class="note">${fmt(NA/V*1000,1)} mEq/L</div></div>
+     <div class="res-item"><div class="k">K</div><div class="v">${fmt(K,1)} <small>mEq</small></div><div class="note">${fmt(kPerL,1)} mEq/L</div></div>
+     ${rateHtml}
+   </div>
+   ${W.map(w=>'<div class="warn">'+esc(w)+'</div>').join('')}
+   <p class="note" style="margin-top:8px">浸透圧比は添付文書の「約」の値を液量で按分した概算です。投与経路・調製場所の最終判断は薬剤師が行ってください。</p>`;
+}
+render();
+
+// ====== タブ切り替え ======
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
+  document.getElementById('tab-calc').style.display=t.dataset.tab==='calc'?'':'none';
+  document.getElementById('tab-nst').style.display=t.dataset.tab==='nst'?'':'none';
+  if(t.dataset.tab==='nst') nst();
+});
+
+// ====== NST投与設計 ======
+const $=id=>document.getElementById(id);
+const num=id=>{const x=parseFloat($(id).value);return isFinite(x)?x:0;};
+
+function nstInputs(){
+  const sex=$('n_sex').value, age=num('n_age'), ht=num('n_ht'), wt=num('n_wt');
+  const m=ht/100, bmi=m>0?wt/(m*m):0, ibw=22*m*m;
+  let wsel=$('n_wsel').value, W, wlabel;
+  if(wsel==='auto'){ if(bmi>=25){W=ibw;wlabel='標準体重（BMI25以上のため）';} else {W=wt;wlabel='実測体重';} }
+  else if(wsel==='ibw'){W=ibw;wlabel='標準体重';} else {W=wt;wlabel='実測体重';}
+  const meth=document.querySelector('input[name=n_meth]:checked').value;
+  const af=num('n_af'), sf=num('n_sf'), kk=num('n_kk');
+  const phase=$('n_phase').value, renal=$('n_renal').value, liver=$('n_liver').value, dm=$('n_dm').checked;
+  let bee=0, E;
+  if(meth==='hb'){ bee= sex==='m' ? 66.47+13.75*W+5.0*ht-6.76*age : 655.1+9.56*W+1.85*ht-4.68*age; E=bee*af*sf; }
+  else E=kk*W;
+  // アミノ酸
+  let pr, pnote='';
+  if(renal==='ckd'){pr=[0.6,0.8];pnote='保存期CKD（G3b以降）'; if(phase==='stress') pnote+='。急性期・侵襲時は制限を緩めることも検討';}
+  else if(renal==='hd'){pr=[0.9,1.2];pnote='透析中';}
+  else if(liver!=='no'){pr=[1.0,1.5];pnote='肝硬変・肝不全'+(liver==='he'?'。肝性脳症では肝不全用アミノ酸（アミノレバン）を検討':'');}
+  else if(phase==='stress'){pr=[1.2,1.5];pnote='侵襲期';}
+  else if(age>=65){pr=[1.0,1.2];pnote='安定期・65歳以上';}
+  else {pr=[0.8,1.0];pnote='安定期';}
+  const pTarget=(pr[0]+pr[1])/2*W;
+  const flmax=num('n_flmax'); const fluid=flmax>0?flmax:num('n_fl')*W;
+  const gLim=(phase==='stress'||dm)?4:5; const gMax=gLim*W*1.44;
+  const okcal=num('n_okcal'), oprot=num('n_oprot');
+  // リフィーディング
+  $('r_bmi16').checked=bmi>0&&bmi<16; $('r_bmi185').checked=bmi>0&&bmi<18.5;
+  const A=['r_bmi16','r_wl15','r_nf10','r_lyte'].filter(i=>$(i).checked).length;
+  const B=['r_bmi185','r_wl10','r_nf5','r_hx'].filter(i=>$(i).checked).length;
+  const extreme=(bmi>0&&bmi<14)||$('r_nf15').checked;
+  const rf= extreme?'extreme':(A>=1||B>=2)?'high':'low';
+  return {sex,age,ht,wt,bmi,ibw,W,wlabel,meth,af,sf,kk,bee,E,pr,pnote,pTarget,fluid,gLim,gMax,okcal,oprot,phase,renal,liver,dm,rf,
+    route:$('n_route').value, lip:$('n_lip').value==='yes'};
+}
+
+function totals(items){
+  const t={vol:0,glu:0,aa:0,fat:0,kcal:0,na:0,k:0};
+  items.forEach(([id,q])=>{const d=byId[id]; t.vol+=d.vol*q; t.glu+=v(d,'glu')*q; t.aa+=v(d,'aa')*q; t.fat+=v(d,'fat')*q; t.kcal+=v(d,'kcal')*q; t.na+=v(d,'na')*q; t.k+=v(d,'k')*q;});
+  return t;
+}
+
+function families(I){
+  const L=I.lip?[[],[['lip50',1]],[['lip100',1]]]:[[]];
+  const L2=I.lip?[[],[['lip50',1]],[['lip100',1]],[['lip100',2]]]:[[]];
+  const F={};
+  F.bf={title:'末梢静脈栄養案（ビーフリード）',route:'ppn',cands:[]};
+  for(let n=1;n<=5;n++) L.forEach(l=>F.bf.cands.push({items:[['bfluid',n]],lip:l}));
+  F.ef={title:'末梢静脈栄養案（エネフリード）',route:'ppn',cands:[]};
+  for(let n=1;n<=2;n++) F.ef.cands.push({items:[['enefluid',n]],lip:[]});
+  F.nf={title:'中心静脈栄養案（エルネオパNF）',route:'tpn',cands:[]};
+  for(let a=0;a<=3;a++)for(let b=0;b<=3;b++){ if(a+b<1||a+b>3) continue; const it=[]; if(a)it.push(['elneo1',a]); if(b)it.push(['elneo2',b]); L2.forEach(l=>F.nf.cands.push({items:it,lip:l})); }
+  if(I.renal==='ckd'){ F.rfneo={title:'中心静脈栄養案（腎不全向け：ハイカリックRF＋ネオアミユー）',route:'tpn',cands:[]};
+    for(let a=1;a<=3;a++)for(let b=1;b<=3;b++) L2.forEach(l=>F.rfneo.cands.push({items:[['hicaliq',a],['neoamiyu',b]],lip:l})); }
+  if(I.renal==='hd'){ F.rfami={title:'中心静脈栄養案（透析中・K/P制限：ハイカリックRF＋アミパレン）',route:'tpn',cands:[]};
+    for(let a=1;a<=3;a++)for(let b=1;b<=2;b++) L2.forEach(l=>F.rfami.cands.push({items:[['hicaliq',a],['amiparen',b]],lip:l})); }
+  if(I.liver==='he'){ F.rfal={title:'中心静脈栄養案（肝性脳症向け：ハイカリックRF＋アミノレバン）',route:'tpn',cands:[]};
+    for(let a=1;a<=2;a++)for(let b=1;b<=2;b++) L2.forEach(l=>F.rfal.cands.push({items:[['hicaliq',a],['aminol500',b]],lip:l})); }
+  return F;
+}
+
+function evalCand(c,I,E,P){
+  const f=c.f||1;
+  const t=totals(c.items.map(([id,q])=>[id,q*f]).concat(c.lip));
+  const bags=c.items.reduce((a,x)=>a+x[1],0);
+  let s=2*Math.abs(t.kcal-E)/Math.max(E,1)+Math.abs(t.aa-P)/Math.max(P,1)+0.02*bags;
+  if(t.vol>I.fluid) s+=5*(t.vol-I.fluid)/I.fluid;
+  if(t.glu>I.gMax) s+=5*(t.glu-I.gMax)/I.gMax;
+  if(t.fat>1.0*I.W) s+=5;
+  const fatPct=t.kcal>0?t.fat*10/t.kcal*100:0; // 20%脂肪乳剤は約10kcal/g（グリセリン込み）
+  if(I.lip && t.fat===0 && E>800) s+=0.12;
+  if(fatPct>30) s+=0.3+(fatPct-30)/10;
+  if((c.f||1)<1) s+=0.3*(1-c.f)*bags; // 速度を落とすときは残液が少ない案を優先
+  return {c,t,s,fatPct};
+}
+
+// start=true のとき、中心静脈栄養は投与速度を落として1日量を減らす案（0.3〜1.0倍）も検討
+function bestOf(fam,I,E,P,start){
+  let cands=fam.cands;
+  if(start && fam.route==='tpn'){ cands=[]; fam.cands.forEach(c=>{ for(let f=3;f<=10;f++) cands.push(Object.assign({},c,{f:f/10})); }); }
+  return cands.map(c=>evalCand(c,I,E,P)).sort((a,b)=>a.s-b.s)[0];
+}
+
+function planCard(key,fam,r,I,E,P,labelE){
+  const t=r.t, W=I.W;
+  const f=r.c.f||1, bagVol=r.c.items.reduce((a,[id,q])=>a+byId[id].vol*q,0);
+  const rx=r.c.items.map(([id,q])=>`<li>${esc(label(byId[id]))} × ${q}袋</li>`).join('')
+    + (f<1?`<li><b>投与速度を落として1日 ${fmt(bagVol*f,0)}mL（約${fmt(bagVol*f/24,0)}mL/時）で投与</b>（目標量の${Math.round(f*100)}％、残液は廃棄）</li>`:'')
+    + r.c.lip.map(([id,q])=>`<li>${esc(label(byId[id]))} × ${q}（<b>別ルート・単独</b>で${fmt(byId[id].fat*q/(0.1*W),1)}時間以上かけて）</li>`).join('');
+  const eAch=t.kcal/Math.max(E,1)*100, pAch=t.aa/Math.max(P,1)*100;
+  const N=t.aa/6.25, npc=t.kcal-t.aa*4, npcn=N>0?npc/N:0;
+  const mgkm=fam.route==='tpn'? t.glu*1000/W/1440 : null;
+  const notes=[];
+  if(key==='nf'){notes.push('総合ビタミン・微量元素を含むキット製剤。混ぜる薬がなければ病棟で隔壁を開通して使用'); if(I.rf==='low') notes.push('開始時は耐糖能を見てNF1号から始め、2〜3日でNF2号へ');}
+  if(key==='rfneo'||key==='rfal'||key==='rfami'){notes.push('ハイカリックRFはK・Pを含まず、ビタミンB1の併用が必要。総合ビタミン剤（ビタジェクト）1キットと微量元素製剤（シザナリン）1管を追加し、K・Pは血清値を見て補正'); notes.push('混注があるため薬剤科で無菌調製（中心静脈専用製剤）');}
+  if(key==='bf'){notes.push('ビタミンB1を含む。末梢静脈栄養が長期化する場合は、中心静脈栄養や経腸栄養への移行を検討');}
+  if(key==='ef'){notes.push('脂肪を含む。他の薬剤の混注・側管からの投与はしない（添付文書）');}
+  if(fam.route==='tpn' && (eAch<80||pAch<80) && !labelE) notes.push('目標に届かない項目があります。水分に余裕があれば袋数を増やす、経腸栄養を併用するなどを検討');
+  if(fam.route==='ppn' && eAch<80) notes.push(`末梢では目標エネルギーの${fmt(eAch,0)}％。目標を満たすには中心静脈栄養か経腸栄養の併用を検討`);
+  if(I.renal!=='no' && (key==='bf'||key==='ef'||key==='nf') && t.k>0) notes.push(`Kを${fmt(t.k,0)}mEq含む。高K血症があれば腎不全向けの案を検討`);
+  if(I.liver==='he' && (key==='bf'||key==='ef'||key==='nf')) notes.push('肝性脳症がある場合はアミノ酸を肝不全用（アミノレバン）にする案も検討');
+  if(I.dm) notes.push('血糖を測定し、必要に応じてインスリンを使用');
+  if(t.vol>I.fluid) notes.push(`水分目標（${fmt(I.fluid,0)}mL）を超えています`);
+  if(t.glu>I.gMax) notes.push(`糖の上限（${fmt(I.gMax,0)}g/日＝${I.gLim}mg/kg/分）を超えています`);
+  // 1袋（混合単位）
+  let bag=null;
+  if(key==='nf'){const b2=r.c.items.find(x=>x[0]==='elneo2'); bag=[[b2?'elneo2':'elneo1',1]];}
+  else if(key==='bf') bag=[['bfluid',1]]; else if(key==='ef') bag=[['enefluid',1]];
+  else { const a=r.c.items[0][1]; bag=r.c.items.map(([id,q],i)=>[id, i===0?1:+(q/a).toFixed(2)]); }
+  return `<div class="plan"><h3>${esc(fam.title)}${labelE?'<br><span class="note">'+esc(labelE)+'</span>':''}</h3>
+   <ul class="rx">${rx}</ul>
+   <table>
+    <tr><td>総液量</td><td class="num">${fmt(t.vol,0)} mL</td><td class="ach">水分目標 ${fmt(I.fluid,0)}mL</td></tr>
+    <tr><td>総熱量</td><td class="num"><b>${fmt(t.kcal,0)} kcal</b></td><td class="ach ${eAch<80||eAch>120?'lo':''}">目標の${fmt(eAch,0)}％（${fmt(t.kcal/W,1)}kcal/kg）</td></tr>
+    <tr><td>アミノ酸</td><td class="num"><b>${fmt(t.aa,1)} g</b></td><td class="ach ${pAch<80||pAch>130?'lo':''}">目標の${fmt(pAch,0)}％（${fmt(t.aa/W,2)}g/kg）</td></tr>
+    <tr><td>ブドウ糖</td><td class="num">${fmt(t.glu,1)} g</td><td class="ach">${mgkm!==null?fmt(mgkm,1)+' mg/kg/分（24時間持続）':fmt(t.glu/W,1)+' g/kg/日'}</td></tr>
+    <tr><td>脂肪</td><td class="num">${fmt(t.fat,0)} g</td><td class="ach">${fmt(t.fat/W,2)} g/kg・熱量の${fmt(r.fatPct,0)}％</td></tr>
+    <tr><td>NPC/N比</td><td class="num">${fmt(npcn,0)}</td><td class="ach">非蛋白熱量 ${fmt(npc,0)}kcal</td></tr>
+    <tr><td>Na / K</td><td class="num">${fmt(t.na,0)} / ${fmt(t.k,0)} mEq</td><td class="ach"></td></tr>
+   </table>
+   <ul class="pnote">${notes.map(n=>'<li>'+esc(n)+'</li>').join('')}</ul>
+   <button class="small" data-bag='${JSON.stringify(bag)}' style="margin-top:6px">1袋の中身を①混合計算で確認</button>
+  </div>`;
+}
+
+function nst(){
+  const I=nstInputs();
+  const tg=$('nstTarget'), pl=$('nstPlans');
+  $('lb_af').style.display=$('lb_sf').style.display=I.meth==='hb'?'':'none';
+  $('lb_kk').style.display=I.meth==='simple'?'':'none';
+  if(!(I.W>0&&I.ht>0&&I.age>0)){tg.innerHTML='<div class="empty">年齢・身長・体重を入力してください。</div>';pl.innerHTML='';return;}
+  const Eiv=Math.max(0,I.E-I.okcal), Piv=Math.max(0,I.pTarget-I.oprot);
+  const Estart= I.rf==='extreme'?5*I.W : I.rf==='high'?10*I.W : null;
+  const lipLo=0.2*Eiv/10, lipHi=Math.min(0.3*Eiv/10, I.W*1.0);
+  const npcRange= I.renal==='ckd'?'180〜300（腎不全・透析前）': I.phase==='stress'?'70〜120（侵襲時）':'150〜180（平常時）';
+  const rfBadge= I.rf==='extreme'?'<span class="badge">超高リスク</span>': I.rf==='high'?'<span class="badge">高リスク</span>':'<span class="badge ok">高リスクの基準に該当なし</span>';
+  tg.innerHTML=`<table class="tgt">
+    <tr><td>BMI</td><td>${fmt(I.bmi,1)}（標準体重 ${fmt(I.ibw,1)}kg）</td></tr>
+    <tr><td>計算に使う体重</td><td><b>${fmt(I.W,1)} kg</b>（${esc(I.wlabel)}）</td></tr>
+    ${I.meth==='hb'?`<tr><td>基礎エネルギー消費量</td><td>${fmt(I.bee,0)} kcal（ハリス・ベネディクト式）</td></tr><tr><td>必要エネルギー</td><td><b>${fmt(I.E,0)} kcal/日</b>（×活動${I.af}×ストレス${I.sf}）</td></tr>`
+      :`<tr><td>必要エネルギー</td><td><b>${fmt(I.E,0)} kcal/日</b>（${I.kk}kcal/kg）</td></tr>`}
+    ${I.okcal>0||I.oprot>0?`<tr><td>経口・経腸分を差し引いた静脈栄養の目標</td><td><b>${fmt(Eiv,0)} kcal・アミノ酸 ${fmt(Piv,1)} g</b></td></tr>`:''}
+    <tr><td>アミノ酸</td><td><b>${fmt(I.pr[0]*I.W,0)}〜${fmt(I.pr[1]*I.W,0)} g/日</b>（${I.pr[0]}〜${I.pr[1]}g/kg：${esc(I.pnote)}）</td></tr>
+    <tr><td>水分</td><td><b>${fmt(I.fluid,0)} mL/日</b>${num('n_flmax')>0?'（上限を入力）':'（'+num('n_fl')+'mL/kg）'}</td></tr>
+    <tr><td>糖の上限</td><td>${fmt(I.gMax,0)} g/日（${I.gLim}mg/kg/分${I.gLim===4?'：'+(I.dm?'糖尿病':'侵襲期'):''}）</td></tr>
+    <tr><td>脂肪の目安</td><td>${I.lip?fmt(lipLo,0)+'〜'+fmt(lipHi,0)+' g/日（熱量の20〜30％、1.0g/kg/日以下）':'使わない'}</td></tr>
+    <tr><td>NPC/N比の目安</td><td>${npcRange}</td></tr>
+    <tr><td>リフィーディング症候群</td><td>${rfBadge}${Estart?`<br>開始量 <b>${fmt(Estart,0)} kcal/日</b>（${I.rf==='extreme'?5:10}kcal/kg）から4〜7日かけて目標へ`:''}</td></tr>
+  </table>
+  ${Estart?'<div class="warn">リフィーディング症候群の高リスクです。栄養開始前からビタミンB1を補充し（例：ダイビタミックス等）、P・K・Mg・血糖を頻回に測定してください。処方案は開始量と目標量の両方を示します。</div>':''}
+  ${I.dm?'<div class="info">糖尿病・高血糖：糖の上限を4mg/kg/分にしています。血糖を測定し、必要に応じてインスリンを使用してください。</div>':''}`;
+
+  const F=families(I);
+  const keys=Object.keys(F).filter(k=>I.route==='both'||F[k].route===I.route);
+  const orderFor=(E,P,start)=>{ if(I.route!=='both') return keys;
+    const bb=bestOf(F.bf,I,E,P,start), be=bestOf(F.ef,I,E,P,start);
+    const o=keys.filter(k=>k!=='bf'&&k!=='ef'); o.unshift(bb.s<=be.s?'bf':'ef'); return o; };
+  let html='';
+  if(Estart){
+    html+='<h3 style="color:var(--navy);margin:4px 0">開始時（リフィーディング症候群の予防）</h3><div class="plans">';
+    const Ps=Piv*Math.min(1,Estart/Math.max(Eiv,1)); orderFor(Estart,Ps,true).forEach(k=>{const r=bestOf(F[k],I,Estart,Ps,true); html+=planCard(k,F[k],r,I,Estart,Ps,'開始量 '+fmt(Estart,0)+'kcal を目標に設計');});
+    html+='</div><h3 style="color:var(--navy);margin:12px 0 4px">4〜7日後の目標量</h3>';
+  }
+  html+='<div class="plans">';
+  orderFor(Eiv,Piv,false).forEach(k=>{const r=bestOf(F[k],I,Eiv,Piv,false); html+=planCard(k,F[k],r,I,Eiv,Piv,'');});
+  html+='</div><p class="note" style="margin-top:8px">処方案は推定式にもとづく目安です。モニタリング（体重、血糖、電解質、BUN、TG、肝機能など）で再評価し、最終的な処方は主治医・NSTが判断してください。電解質・ビタミン・微量元素の過不足は別途確認してください。</p>';
+  pl.innerHTML=html;
+  pl.querySelectorAll('[data-bag]').forEach(b=>b.onclick=()=>{
+    rows=JSON.parse(b.dataset.bag).map(([id,qty])=>({id,qty})); render();
+    document.querySelector('.tab[data-tab=calc]').click(); window.scrollTo(0,0);
+  });
+}
+document.querySelectorAll('#tab-nst input, #tab-nst select').forEach(e=>{e.addEventListener('input',nst);e.addEventListener('change',nst);});
+</script>
+</body>
+</html>
