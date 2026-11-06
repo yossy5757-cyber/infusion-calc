@@ -310,6 +310,7 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
       ・<b>脂肪</b>：総エネルギーの20〜30％が目安、1.0g/kg/日以下、投与速度0.1g/kg/時以下。<br>
       ・<b>NPC/N比</b>：平常時150〜180、侵襲時70〜120、腎不全（透析前）180〜300が目安。窒素＝アミノ酸÷6.25。<br>
       ・<b>リフィーディング症候群</b>：NICE基準で高リスクなら開始量10kcal/kg/日（超高リスクは5kcal/kg/日）から4〜7日かけて目標へ。ビタミンB1を補充し、P・K・Mgを頻回に測定。<br>
+      ・<b>ビタミン・微量元素製剤</b>（ビタジェクト、ダイビタミックス、アリナミンF10、フルスルチアミン50mg、パントール、メチコバール、アスコルビン酸、ケイツーN、シザナリン、アセレンド）は各添付文書（PMDA）の含有量です。熱量は計算に含めません（フルスルチアミン50mg・アリナミンF10に含まれるブドウ糖のみ計算）。浸透圧比の記載を確認できなかったものは1として計算しています。<br>
       ・提案は、採用品の組み合わせを総当たりで計算し、不足分（目標－入力済みの量）に最も近く、水分・糖・K・Pの上限を超えにくいものを選んでいます。
     </div>
   </details>
@@ -396,6 +397,16 @@ const DRUGS = [
  {id:'phosna',   cat:'電解質補正液', name:'リン酸Na補正液0.5mmol/mL', spec:'20mL', gen:'リン酸ナトリウム', vol:20, na:15, osm:3, additive:true, extra:{p:10}},
  {id:'mgso4',    cat:'電解質補正液', name:'硫酸Mg補正液1mEq/mL', spec:'20mL', gen:'硫酸マグネシウム', vol:20, osm:2, additive:true, extra:{mg:20}},
  {id:'calcicol', cat:'電解質補正液', name:'カルチコール注射液8.5%', spec:'5mL', gen:'グルコン酸カルシウム', vol:5, osm:0.9, additive:true, extra:{ca:1.95}},
+ {id:'vitaject', cat:'ビタミン・微量元素', name:'ビタジェクト注キット', spec:'1キット（A液5mL＋B液5mL）', gen:'高カロリー輸液用総合ビタミン剤', vol:10, osm:1, additive:true, vitB1:true, vit:'総合ビタミン13種（チアミン塩化物塩酸塩3mg）', note:'高カロリー輸液に注入。通常成人1日1キット。血友病の患者には禁忌'},
+ {id:'dvitamix', cat:'ビタミン・微量元素', name:'ダイビタミックス注', spec:'2mL', gen:'チアミン・B6・B12配合剤', vol:2, osm:3.3, additive:true, vitB1:true, vit:'ビタミンB1・B6・B12（B12 1,000μg）', note:'アミノ酸製剤と混合するとビタミンの分解が促進されることがある'},
+ {id:'alinF10', cat:'ビタミン・微量元素', name:'アリナミンF10注', spec:'2mL', gen:'フルスルチアミン', vol:2, glu:0.4, kcal:1.6, osm:4, additive:true, vitB1:true, vit:'ビタミンB1誘導体 10mg'},
+ {id:'fursul50', cat:'ビタミン・微量元素', name:'フルスルチアミン静注50mg「トーワ」', spec:'20mL', gen:'フルスルチアミン', vol:20, glu:4, kcal:16, osm:5.3, additive:true, vitB1:true, vit:'ビタミンB1誘導体 50mg（ブドウ糖4g含有）'},
+ {id:'pantol', cat:'ビタミン・微量元素', name:'パントール注射液100mg', spec:'1mL', gen:'パンテノール', vol:1, osm:2, additive:true, vit:'パントテン酸 100mg'},
+ {id:'methyco', cat:'ビタミン・微量元素', name:'メチコバール注射液500μg', spec:'1mL', gen:'メコバラミン', vol:1, osm:1, additive:true, vit:'ビタミンB12 500μg'},
+ {id:'vitc500', cat:'ビタミン・微量元素', name:'アスコルビン酸注500mg「イセイ」', spec:'2mL', gen:'アスコルビン酸', vol:2, osm:9, additive:true, vit:'ビタミンC 500mg'},
+ {id:'k2n', cat:'ビタミン・微量元素', name:'ケイツーN静注10mg', spec:'2mL', gen:'メナテトレノン', vol:2, osm:3, additive:true, vit:'ビタミンK2 10mg'},
+ {id:'shizanarin', cat:'ビタミン・微量元素', name:'シザナリン配合点滴静注液', spec:'2mL', gen:'微量元素製剤（鉄・マンガン・亜鉛・銅・ヨウ素）', vol:2, osm:0.5, additive:true, trace:true, vit:'Fe 35・Mn 1・Zn 60・Cu 5・I 1（μmol）', note:'通常成人1日2mLを高カロリー輸液に添加。胆道閉塞のある患者には禁忌'},
+ {id:'aselend', cat:'ビタミン・微量元素', name:'アセレンド注100μg', spec:'2mL', gen:'亜セレン酸ナトリウム', vol:2, osm:1, additive:true, vit:'セレン 100μg'},
 ];
 // =====================================================================
 
@@ -788,7 +799,7 @@ function design(){
      <td class="num"><input type="number" data-eq="${i}" value="${r.qty}" min="0" step="0.5"> ${d.id==='solitaT'?'包':'個'}</td><td class="num">${fmt(d.kcal*r.qty,0)}kcal</td><td><button class="small del" data-edel="${i}">×</button></td></tr>`;}).join('')
     :'<tr><td class="empty">経腸栄養なし</td></tr>';
   $('ivRows').innerHTML=ivrows.length?ivrows.map((r,i)=>{const d=byId[r.id];
-    return `<tr><td>${esc(label(d))}${d.cv?'<span class="tag">中心静脈</span>':''}${d.sep?'<span class="tag b">別ルート</span>':''}</td>
+    return `<tr><td>${esc(label(d))}${d.cv?'<span class="tag">中心静脈</span>':''}${d.sep?'<span class="tag b">別ルート</span>':''}${d.vit?'<div class="gen">'+esc(d.vit)+'</div>':''}</td>
      <td class="num"><input type="number" data-iq="${i}" value="${r.qty}" min="0" step="0.1"> 袋</td><td class="num">${fmt(v(d,'kcal')*r.qty,0)}kcal</td><td><button class="small del" data-idel="${i}">×</button></td></tr>`;}).join('')
     :'<tr><td class="empty">輸液なし</td></tr>';
   document.querySelectorAll('[data-eq]').forEach(e=>e.onchange=()=>{erows[+e.dataset.eq].qty=parseFloat(e.value)||0;design();});
@@ -833,6 +844,11 @@ function design(){
   if(erows.some(r=>enBy[r.id].form==='semi'&&r.qty>0)&&$('e_route').value==='ng') Wn.push('半固形製剤は胃瘻から注入します（経鼻胃管では使わない）');
   if(erows.some(r=>r.id==='solitaT'&&r.qty>0)){ if(['g4','g5','hd','pd'].includes(I.renal)) Wn.push('ソリタ−T配合顆粒3号は重篤な腎障害の患者には禁忌（添付文書）');
     if($('e_route').value!=='oral') Wn.push('ソリタ−T配合顆粒3号の添付文書の用法は経口投与です'); }
+  const hasIv=id=>ivrows.some(r=>r.id===id&&r.qty>0);
+  if(hasIv('shizanarin')&&(hasIv('elneo1')||hasIv('elneo2'))) Wn.push('エルネオパNFは微量元素を含むため、シザナリンと重複します（添付文書：含まれる量に応じて適宜減量）');
+  if(hasIv('vitaject')&&(hasIv('elneo1')||hasIv('elneo2')||hasIv('enefluid'))) Wn.push('エルネオパNF・エネフリードはビタミンを含むため、ビタジェクトと重複します');
+  if(hasIv('dvitamix')&&ivrows.some(r=>r.qty>0&&v(byId[r.id],'aa')>0)) Wn.push('ダイビタミックス注はアミノ酸製剤と混合するとビタミンの分解が促進されることがあります（添付文書）');
+  if(ivrows.some(r=>r.qty>0&&['vitaject','shizanarin'].includes(r.id))) Wn.push('ビタジェクトは血友病、シザナリンは胆道閉塞のある患者には禁忌です（添付文書）');
   if(ivrows.some(r=>r.id==='hicaliq'&&r.qty>0)) Wn.push('ハイカリックRFはK・Pを含まず、ビタミンB1の併用が必要。総合ビタミン剤・微量元素製剤を追加し、K・Pは血清値を見て補正');
   if(ivrows.some(r=>byId[r.id].cv&&r.qty>0)) Wn.push('中心静脈専用製剤を含みます（中心静脈から投与）');
   if(ivrows.some(r=>r.id==='enefluid'&&r.qty>0)) Wn.push('エネフリードは脂肪を含むため、他の薬剤の混注・側管からの投与はしない（添付文書）');
@@ -869,12 +885,13 @@ function design(){
   const hasEN=te.kcal>0, hasPN=ivrows.some(r=>r.qty>0);
   const has=id=>ivrows.some(r=>r.id===id&&r.qty>0), hasE=id=>erows.some(r=>r.id===id&&r.qty>0);
   if(hasEN||hasPN) mon.push(['全体','体重、水分出納（尿量・排液）、浮腫・脱水の所見']);
-  if(I.Estart) mon.push(['リフィーディング','栄養開始前からビタミンB1を補充。P・K・Mg・血糖を開始後数日は毎日測定し、低下があれば補正']);
+  const b1=ivrows.filter(r=>r.qty>0&&(byId[r.id].vitB1||['bfluid','elneo1','elneo2','enefluid'].includes(r.id))).map(r=>byId[r.id].name);
+  if(I.Estart) mon.push(['リフィーディング','栄養開始前からビタミンB1を補充。P・K・Mg・血糖を開始後数日は毎日測定し、低下があれば補正'+(b1.length?'（B1を含む輸液：'+[...new Set(b1)].join('、')+'）':'。<b>B1を含む注射薬が入力されていません</b>')]);
   if(hasPN) mon.push(['静脈栄養','血糖、電解質（Na・K・Cl・P・Mg）、BUN・Cr、肝機能（AST・ALT・T-Bil）']);
   if(ti.fat>0) mon.push(['脂肪乳剤','血清TG（高TG血症では減量・中止を検討）。0.1g/kg/時以下で投与（'+fmt(ti.fat/(0.1*W),1)+'時間以上）。輸液ラインは24時間以内に交換']);
   if(ivrows.some(r=>byId[r.id].cv&&r.qty>0)) mon.push(['中心静脈','発熱などカテーテル関連血流感染の徴候、刺入部の観察']);
-  if(has('hicaliq')) mon.push(['ハイカリックRF','ビタミンB1の併用が必須（乳酸アシドーシス予防）。総合ビタミン剤・微量元素製剤を追加。K・Pは含まないため血清値を確認']);
-  if(has('bfluid')) mon.push(['ビーフリード','ビタミンB1以外のビタミン・微量元素は含まないため、長期化する場合は追加や経路の変更を検討']);
+  if(has('hicaliq')) mon.push(['ハイカリックRF','ビタミンB1の併用が必須（乳酸アシドーシス予防）。'+(has('vitaject')?'総合ビタミン剤（ビタジェクト）入力済み':'<b>総合ビタミン剤（ビタジェクト）が未入力</b>')+'・'+(has('shizanarin')?'微量元素製剤（シザナリン）入力済み':'<b>微量元素製剤（シザナリン）が未入力</b>')+'。K・Pは含まないため血清値を確認']);
+  if(has('bfluid')&&!(has('vitaject')&&has('shizanarin'))) mon.push(['ビーフリード','ビタミンB1以外のビタミン・微量元素は含まないため、長期化する場合は追加（ビタジェクト・シザナリン等）や経路の変更を検討']);
   if(hasEN) mon.push(['経腸栄養','下痢・腹部膨満・嘔吐（誤嚥）、排便の状況'+($('e_route').value!=='oral'?'、チューブの位置':'')]);
   if(erows.some(r=>r.qty>0&&enBy[r.id].form==='semi')) mon.push(['半固形製剤','胃瘻部からの漏れ、注入時の抵抗']);
   if(hasE('elental')) mon.push(['エレンタール','長期使用では必須脂肪酸欠乏（皮膚炎など）に注意。脂肪乳剤の併用を検討']);
@@ -883,7 +900,7 @@ function design(){
   if(I.liver==='he') mon.push(['肝性脳症','血中アンモニア、意識状態']);
   if(I.dm||gmk>I.gLim) mon.push(['血糖','血糖を頻回に測定し、必要に応じてインスリンを使用']);
   if(tot.k>(kMax||1e9)||(I.renal!=='no'&&tot.k>2000)) mon.push(['カリウム','K投与量が多め。血清Kを確認']);
-  $('monBox').innerHTML=mon.length?'<table class="tgt">'+mon.map(m=>`<tr><td>${esc(m[0])}</td><td>${esc(m[1])}</td></tr>`).join('')+'</table>':'<div class="note">経腸栄養・輸液を入力すると、内容に合わせた確認項目を表示します。</div>';
+  $('monBox').innerHTML=mon.length?'<table class="tgt">'+mon.map(m=>`<tr><td>${esc(m[0])}</td><td>${m[1]}</td></tr>`).join('')+'</table>':'<div class="note">経腸栄養・輸液を入力すると、内容に合わせた確認項目を表示します。</div>';
   // --- 記録用テキスト ---
   const d=new Date(), ds=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
   const L=[];
@@ -897,7 +914,7 @@ function design(){
   if(eR>1.1) lack.push(`熱量 ${fmt(tot.kcal-E,0)}kcal過剰`); if(tot.pro>Pr[1]*1.05) lack.push(`たんぱく質 ${fmt(tot.pro-Pr[1],0)}g過剰`); if(tot.water>fluid*1.1) lack.push(`水分 ${fmt(tot.water-fluid,0)}mL過剰`);
   if(lack.length) L.push('判定：'+lack.join('、'));
   if(Wn.length) L.push('注意：'+Wn.join('／'));
-  if(mon.length) L.push('モニタリング：'+mon.map(m=>m[0]+'（'+m[1]+'）').join('／'));
+  if(mon.length) L.push('モニタリング：'+mon.map(m=>m[0]+'（'+m[1].replace(/<[^>]+>/g,'')+'）').join('／'));
   L.push('※輸液計算・NST投与設計ツール（薬剤科）による目安。最終判断は主治医・NST。');
   const sumText=L.join('\n');
   $('btnCopy').onclick=async()=>{
@@ -973,18 +990,19 @@ function pnCard(key,fam,r,I,Ed,Pd,te,flush,fluid){
   const bagVol=r.c.items.reduce((a,[id,q])=>a+byId[id].vol*q,0);
   const rx=r.c.items.map(([id,q])=>`<li>${esc(label(byId[id]))} × ${q}袋</li>`).join('')
     +(f<1?`<li><b>速度を落として1日 ${fmt(bagVol*f,0)}mL（約${fmt(bagVol*f/24,0)}mL/時）</b>（残液は廃棄）</li>`:'')
-    +r.c.lip.map(([id,q])=>`<li>${esc(label(byId[id]))} × ${q}（別ルート・単独で${fmt(byId[id].fat*q/(0.1*W),1)}時間以上）</li>`).join('');
+    +r.c.lip.map(([id,q])=>`<li>${esc(label(byId[id]))} × ${q}（別ルート・単独で${fmt(byId[id].fat*q/(0.1*W),1)}時間以上）</li>`).join('')
+    +(['rfneo','rfal','rfami'].includes(key)?'<li>ビタジェクト注キット × 1、シザナリン配合点滴静注液 × 1（反映時に追加）</li>':'');
   const notes=[];
   if(key==='nf') notes.push('総合ビタミン・微量元素を含むキット製剤');
   if(key==='bf') notes.push('末梢静脈栄養。長期化する場合は中心静脈栄養・経腸栄養への移行を検討');
   if(key==='ef') notes.push('脂肪を含む。混注・側管投与はしない');
-  if(key==='rfneo'||key==='rfal'||key==='rfami') notes.push('ハイカリックRFはK・P・ビタミンを含まない。総合ビタミン剤と微量元素製剤を追加し、混注するため薬剤科で無菌調製');
+  if(key==='rfneo'||key==='rfal'||key==='rfami') notes.push('ハイカリックRFはK・P・ビタミンを含まない。ビタジェクト（総合ビタミン）とシザナリン（微量元素）を追加し、混注するため薬剤科で無菌調製');
   if(t.glu>I.gMax) notes.push(`糖の上限（${fmt(I.gMax,0)}g/日）を超えます`);
   const totK=te.kcal+t.kcal, totW=te.water+flush+t.vol;
   const Eall=te.kcal+Ed; if(totK<Eall*0.85) notes.push(`経腸＋輸液で目標の${fmt(totK/Eall*100,0)}％。${I.RR.restrict?'たんぱく質の上限があるため、':''}不足分は経腸栄養の増量や中心静脈栄養を検討`);
   if(totW<fluid*0.9) notes.push(`水分はあと約${fmt(fluid-totW,0)}mL不足（白湯・維持液で補う）`);
   if(totW>fluid*1.1) notes.push(`水分が目標を${fmt(totW-fluid,0)}mL超えます`);
-  const v=r.c.items.map(([id,q])=>[id,+(q*f).toFixed(1)]).concat(r.c.lip);
+  const v=r.c.items.map(([id,q])=>[id,+(q*f).toFixed(1)]).concat(r.c.lip).concat(['rfneo','rfal','rfami'].includes(key)?[['vitaject',1],['shizanarin',1]]:[]);
   return `<div class="plan"><h3>${esc(fam.title)}</h3><ul class="rx">${rx}</ul>
    <table><tr><td>輸液の熱量</td><td class="num"><b>${fmt(t.kcal,0)} kcal</b></td><td class="ach">不足分 ${fmt(Ed,0)}kcal に対し</td></tr>
    <tr><td>アミノ酸</td><td class="num">${fmt(t.aa,1)} g</td><td class="ach">不足分 ${fmt(Math.max(Pd,0),1)}g</td></tr>
