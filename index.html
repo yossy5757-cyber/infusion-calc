@@ -800,7 +800,7 @@ function design(){
     :'<tr><td class="empty">経腸栄養なし</td></tr>';
   $('ivRows').innerHTML=ivrows.length?ivrows.map((r,i)=>{const d=byId[r.id];
     return `<tr><td>${esc(label(d))}${d.cv?'<span class="tag">中心静脈</span>':''}${d.sep?'<span class="tag b">別ルート</span>':''}${d.vit?'<div class="gen">'+esc(d.vit)+'</div>':''}</td>
-     <td class="num"><input type="number" data-iq="${i}" value="${r.qty}" min="0" step="0.1"> 袋</td><td class="num">${fmt(v(d,'kcal')*r.qty,0)}kcal</td><td><button class="small del" data-idel="${i}">×</button></td></tr>`;}).join('')
+     <td class="num"><input type="number" data-iq="${i}" value="${r.qty}" min="0" step="0.1"> ${d.additive?'本':'袋'}</td><td class="num">${fmt(v(d,'kcal')*r.qty,0)}kcal</td><td><button class="small del" data-idel="${i}">×</button></td></tr>`;}).join('')
     :'<tr><td class="empty">輸液なし</td></tr>';
   document.querySelectorAll('[data-eq]').forEach(e=>e.onchange=()=>{erows[+e.dataset.eq].qty=parseFloat(e.value)||0;design();});
   document.querySelectorAll('[data-dil]').forEach(e=>e.onchange=()=>{erows[+e.dataset.dil].dil=parseFloat(e.value)||0;design();});
@@ -886,7 +886,7 @@ function design(){
   const has=id=>ivrows.some(r=>r.id===id&&r.qty>0), hasE=id=>erows.some(r=>r.id===id&&r.qty>0);
   if(hasEN||hasPN) mon.push(['全体','体重、水分出納（尿量・排液）、浮腫・脱水の所見']);
   const b1=ivrows.filter(r=>r.qty>0&&(byId[r.id].vitB1||['bfluid','elneo1','elneo2','enefluid'].includes(r.id))).map(r=>byId[r.id].name);
-  if(I.Estart) mon.push(['リフィーディング','栄養開始前からビタミンB1を補充。P・K・Mg・血糖を開始後数日は毎日測定し、低下があれば補正'+(b1.length?'（B1を含む輸液：'+[...new Set(b1)].join('、')+'）':'。<b>B1を含む注射薬が入力されていません</b>')]);
+  if(I.Estart) mon.push(['リフィーディング','栄養開始前からビタミンB1を補充。P・K・Mg・血糖を開始後数日は毎日測定し、低下があれば補正'+(b1.length?'（入力済みのB1含有製剤：'+[...new Set(b1)].join('、')+'。NICEの指針では開始直前から10日間、維持量より多いB1（経口で1日200〜300mgなど）を推奨。量は医師の指示・施設の基準で）':'。<b>B1を含む注射薬が入力されていません</b>（NICEの指針では開始直前から10日間、維持量より多いB1を推奨）')]);
   if(hasPN) mon.push(['静脈栄養','血糖、電解質（Na・K・Cl・P・Mg）、BUN・Cr、肝機能（AST・ALT・T-Bil）']);
   if(ti.fat>0) mon.push(['脂肪乳剤','血清TG（高TG血症では減量・中止を検討）。0.1g/kg/時以下で投与（'+fmt(ti.fat/(0.1*W),1)+'時間以上）。輸液ラインは24時間以内に交換']);
   if(ivrows.some(r=>byId[r.id].cv&&r.qty>0)) mon.push(['中心静脈','発熱などカテーテル関連血流感染の徴候、刺入部の観察']);
