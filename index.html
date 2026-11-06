@@ -130,7 +130,6 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
 <nav class="tabs">
   <button class="tab active" data-tab="calc">① 混合計算（糖濃度・浸透圧比）</button>
   <button class="tab" data-tab="nst">② 栄養設計（経腸＋輸液）</button>
-  <button class="tab" data-tab="ele">③ 電解質補正</button>
 </nav>
 <main id="tab-calc">
 <section>
@@ -326,76 +325,6 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
   </details>
 </section>
 </main>
-<main id="tab-ele" style="display:none">
-<section>
-  <h2>1．患者</h2>
-  <div class="fgrid">
-    <label>性別<select id="x_sex"><option value="m">男性</option><option value="f">女性</option></select></label>
-    <label>年齢（歳）<input type="number" id="x_age" min="18" max="110"></label>
-    <label>体重（kg）<input type="number" id="x_wt" min="20" max="250" step="0.1"></label>
-    <label>腎機能<select id="x_renal"><option value="no">問題なし</option><option value="low">腎機能低下（G4以降）</option><option value="hd">透析</option></select></label>
-  </div>
-  <p class="note" style="margin:4px 0 0">初めて開いたときは②の値が入ります。</p>
-  <h2 style="margin-top:14px">2．カリウム補正（低K血症）</h2>
-  <div class="fgrid">
-    <label>血清K（mEq/L）<input type="number" id="x_k" min="0" max="10" step="0.1" placeholder="例 2.8"></label>
-    <label>投与時間（時間）<input type="number" id="x_kh" min="0.5" step="0.5" value="4"></label>
-    <label class="full">混ぜる輸液<span style="display:flex;gap:4px"><select id="x_kbase" style="flex:1"></select><input type="number" id="x_kbn" min="0" step="1" value="1" style="width:60px"></span></label>
-    <label class="full">K製剤<span style="display:flex;gap:4px"><select id="x_kprod" style="flex:1"><option value="kcl20">KCL注20mEqキット（20mEq/20mL）</option><option value="aspk10">アスパラギン酸カリウム注10mEqキット（10mEq/10mL）</option></select><input type="number" id="x_kn" min="0" step="1" value="1" style="width:60px"></span></label>
-    <label class="full">その日のほかのK（他の輸液・TPNなど、mEq）<input type="number" id="x_kother" min="0" step="1" value="0"></label>
-  </div>
-  <div id="kRes" style="margin-top:8px"></div>
-</section>
-
-<section>
-  <h2>3．ナトリウム補正（低Na血症・高Na血症）</h2>
-  <div class="fgrid">
-    <label>血清Na（mEq/L）<input type="number" id="x_na" min="90" max="190" step="1" placeholder="例 118"></label>
-    <label>血糖（mg/dL・任意）<input type="number" id="x_glu" min="0" step="1"></label>
-    <label>24時間で変えるNaの幅（mEq/L）<select id="x_tgt"><option>4</option><option selected>6</option><option>8</option><option>10</option></select></label>
-    <label style="justify-content:flex-end"><span class="chk" style="margin:0"><label><input type="checkbox" id="x_ods"> ODS高リスク</label></span></label>
-  </div>
-  <div class="note">ODS高リスク：Na 105以下、低K血症、アルコール多飲、低栄養、肝疾患</div>
-  <fieldset><legend>使う輸液</legend>
-    <div class="examples" style="margin:0 0 6px"><button class="small" data-napre="ns">生理食塩液</button><button class="small" data-napre="hs3">3%食塩液（生食500mLから100mL抜き10%食塩注6本）</button><button class="small" data-napre="g5">5%ブドウ糖（高Na血症）</button></div>
-    <div class="fgrid">
-      <label class="full">ベースの輸液<span style="display:flex;gap:4px"><select id="x_nabase" style="flex:1"></select><input type="number" id="x_nabn" min="0" step="1" value="1" style="width:60px"></span></label>
-      <label>ベースから抜く量（mL）<input type="number" id="x_nadrop" min="0" step="10" value="0"></label>
-      <label>大塚食塩注10%（20mL）本数<input type="number" id="x_nacl" min="0" step="1" value="0"></label>
-      <label>KCL注20mEq 本数<input type="number" id="x_nak" min="0" step="1" value="0"></label>
-    </div>
-  </fieldset>
-  <div id="naRes" style="margin-top:8px"></div>
-</section>
-
-<section style="grid-column:1/-1">
-  <h2>4．P・Mg・Ca 補正液の早見（当院採用品）</h2>
-  <div style="overflow-x:auto"><table class="master">
-    <tr><th>製品</th><th>1管（1本）の含有量</th><th>添付文書の主な注意</th><th>本数から換算</th></tr>
-    <tr><td>リン酸Na補正液0.5mmol/mL（20mL）</td><td>P 10mmol（310mg）、Na 15mEq</td><td>電解質補液に添加して用いる（補正用）。投与量・速度の上限の記載なし</td><td><input type="number" id="x_pn" min="0" step="0.5" value="1" style="width:56px">管 → <span id="x_pout"></span></td></tr>
-    <tr><td>硫酸Mg補正液1mEq/mL（20mL）</td><td>Mg 20mEq（硫酸Mg水和物 2.46g）</td><td>必ず希釈して使用</td><td><input type="number" id="x_mgn" min="0" step="0.5" value="1" style="width:56px">管 → <span id="x_mgout"></span></td></tr>
-    <tr><td>カルチコール注射液8.5%（5mL）</td><td>Ca 約1.95mEq（グルコン酸Ca 425mg）</td><td>リン酸塩・炭酸塩を含む液とは沈殿のおそれ</td><td><input type="number" id="x_can" min="0" step="1" value="1" style="width:56px">本 → <span id="x_caout"></span></td></tr>
-  </table></div>
-  <ul class="note" style="margin:6px 0 0;padding-left:18px">
-    <li>リン酸製剤とカルシウム製剤は同じ輸液に高濃度で混ぜると沈殿することがあります。配合量に注意し、迷う場合は薬剤科で配合を確認してください。</li>
-    <li>低K血症が改善しないときは低Mg血症の合併を確認します。</li>
-    <li>リフィーディング症候群のリスクがある患者では、P・K・Mgを頻回に測定します（②の目標量の欄も参照）。</li>
-  </ul>
-  <details>
-    <summary>計算方法と出典</summary>
-    <div class="note">
-      ・<b>カリウム</b>：KCL注20mEqキット「テルモ」等の添付文書の「カリウムイオン濃度として40mEq/L以下に希釈」「投与速度は20mEq/hrを超えない」「1日100mEqを超えない」で判定します（輸液にもともと含まれるKも合算）。血清Kの値から不足量を正確に推定することはできないため、補充後は血清Kを再検してください。<br>
-      ・<b>ナトリウム</b>：Adrogue-Madias式（輸液1Lあたりの血清Naの変化＝（輸液のNa＋K濃度－血清Na）÷（体内総水分量＋1））。体内総水分量は体重×0.6（男性）、0.5（女性）、65歳以上は0.5（男性）、0.45（女性）。<br>
-      ・式は尿や不感蒸泄による喪失を含まないため、実際の変化は計算と異なります。特に原因の解除（脱水の補正、デスモプレシン中止など）による水利尿で過補正が起こりやすく、血清Naを数時間ごとに測定してください。<br>
-      ・<b>補正速度</b>：慢性の低Na血症では24時間で8〜10mEq/Lを超えない（ODS高リスクは8以下）、目標は4〜8mEq/L/日が目安（米国・欧州の診療ガイドライン）。重い症状がある急性の低Na血症では、医師の判断で3%食塩液を少量ずつ投与する方法（例：150mLを20分かけて）が示されています。<br>
-      ・<b>高Na血症</b>：自由水欠乏量＝体内総水分量×（血清Na÷140－1）。24時間で10mEq/L程度までの低下を目安とします。<br>
-      ・<b>高血糖時の補正Na</b>＝実測Na＋1.6×（血糖－100）÷100（Katzの式。2.4を用いる報告もあります）。<br>
-      ・補正液の含有量は各添付文書（PMDA）の値です。計算値は目安で、最終判断は医師・薬剤師が行ってください。
-    </div>
-  </details>
-</section>
-</main>
-
 
 
 <script>
@@ -589,9 +518,8 @@ render();
 // ====== タブ切り替え ======
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
-  ['calc','nst','ele'].forEach(k=>document.getElementById('tab-'+k).style.display=t.dataset.tab===k?'':'none');
+  ['calc','nst'].forEach(k=>document.getElementById('tab-'+k).style.display=t.dataset.tab===k?'':'none');
   if(t.dataset.tab==='nst') design();
-  if(t.dataset.tab==='ele') eleOpen();
 });
 
 // ====== NST投与設計 ======
@@ -985,97 +913,6 @@ function enCard(title,r,sub,T,Ed,W,ti,flush,fluid){
    <tr><td>水分（製品）</td><td class="num">${fmt(t.water,0)} mL</td><td class="ach"></td></tr>
    <tr><td>食塩 / K / P</td><td class="num">${fmt(salt,1)}g / ${fmt(t.k,0)} / ${fmt(t.p,0)}mg</td><td class="ach"></td></tr></table>
    <ul class="pnote">${notes.map(n=>'<li>'+esc(n)+'</li>').join('')}</ul>${applyBtn('en',r.items)}</div>`;
-}
-
-
-// ====== ③ 電解質補正 ======
-let eleInit=false;
-(function(){
-  const baseOpts=DRUGS.filter(d=>(d.cat==='電解質輸液'||d.cat==='糖液')&&d.vol>=100).map(d=>`<option value="${d.id}">${esc(label(d))}</option>`).join('');
-  $('x_kbase').innerHTML=baseOpts; $('x_nabase').innerHTML=baseOpts;
-  $('x_kbase').value='ns_500'; $('x_nabase').value='ns_500';
-  const box=$('tab-ele'); box.addEventListener('input',ele); box.addEventListener('change',ele);
-  document.querySelectorAll('[data-napre]').forEach(b=>b.onclick=()=>{
-    const p=b.dataset.napre;
-    if(p==='ns'){$('x_nabase').value='ns_500';$('x_nabn').value=1;$('x_nadrop').value=0;$('x_nacl').value=0;$('x_nak').value=0;}
-    if(p==='hs3'){$('x_nabase').value='ns_500';$('x_nabn').value=1;$('x_nadrop').value=100;$('x_nacl').value=6;$('x_nak').value=0;}
-    if(p==='g5'){$('x_nabase').value='tglu5_500';$('x_nabn').value=1;$('x_nadrop').value=0;$('x_nacl').value=0;$('x_nak').value=0;}
-    ele();});
-})();
-function eleOpen(){
-  if(!eleInit){ $('x_sex').value=$('n_sex').value; $('x_age').value=$('n_age').value; $('x_wt').value=$('n_wt').value;
-    const r=$('n_renal').value; $('x_renal').value=(r==='hd'||r==='pd')?'hd':(r==='g4'||r==='g5')?'low':'no'; eleInit=true; }
-  ele();
-}
-function ele(){
-  const sex=$('x_sex').value, age=num('x_age'), W=num('x_wt'), renal=$('x_renal').value;
-  const J=(ok,t)=>`<span class="badge ${ok?'ok':''}">${t}</span>`;
-  // --- K ---
-  const kb=byId[$('x_kbase').value], kbn=num('x_kbn'), kp=byId[$('x_kprod').value], kn=num('x_kn'), kh=num('x_kh'), kother=num('x_kother'), sk=num('x_k');
-  const baseVol=kb.vol*kbn, baseK=v(kb,'k')*kbn, addK=kp.k*kn, V=baseVol+kp.vol*kn, totK=baseK+addK;
-  let html='';
-  if(baseVol>0){
-    const conc=V>0?totK/V*1000:0, rate=kh>0?totK/kh:0, day=totK+kother;
-    let maxN=0; for(let n=0;n<=20;n++){ const c=(baseK+kp.k*n)/(baseVol+kp.vol*n)*1000; if(c<=40) maxN=n; else break; }
-    const minH=totK/20;
-    const W2=[];
-    if(sk>0&&sk<2.5) W2.push('血清K 2.5mEq/L未満（重度）。心電図変化・不整脈の有無を確認し、医師と補正方法（経路・モニター）を相談');
-    if(renal!=='no') W2.push('腎機能低下・透析ではKが上がりやすい。少量から始め、早めに血清Kを再検');
-    if(conc>40) W2.push(`濃度が40mEq/Lを超えています。この輸液量なら${kp===byId.kcl20?'KCL注':'アスパラK注'}は${maxN}本まで`);
-    if(rate>20) W2.push(`投与速度が20mEq/hrを超えています。${fmt(minH,1)}時間以上かけて投与`);
-    if(day>100) W2.push('1日量が100mEqを超えています（添付文書の上限）');
-    html+=`<table class="tgt">
-      <tr><td>混合後の液量・K量</td><td>${fmt(V,0)} mL・K <b>${fmt(totK,0)} mEq</b>（輸液由来 ${fmt(baseK,0)}＋追加 ${fmt(addK,0)}）</td></tr>
-      <tr><td>K濃度</td><td><b>${fmt(conc,1)} mEq/L</b> ${J(conc<=40,'40以下')}</td></tr>
-      <tr><td>投与速度</td><td><b>${fmt(rate,1)} mEq/時</b>（${fmt(kh,1)}時間・約${fmt(kh>0?V/kh:0,0)}mL/時） ${J(rate<=20,'20以下')}</td></tr>
-      <tr><td>1日のK量</td><td><b>${fmt(day,0)} mEq</b>（ほかのK ${fmt(kother,0)}を含む） ${J(day<=100,'100以下')}</td></tr>
-      <tr><td>この輸液に入れられる量</td><td>${kp===byId.kcl20?'KCL注20mEq':'アスパラK注10mEq'} <b>${maxN}本まで</b>（40mEq/L以下）・最短 ${fmt(minH,1)}時間</td></tr>
-     </table>${W2.map(w=>'<div class="warn">'+esc(w)+'</div>').join('')}
-     <p class="note" style="margin:6px 0 0">経口・経腸で補充できる場合は経口が基本です。補正が進まない場合は低Mg血症を確認してください。</p>`;
-  }
-  $('kRes').innerHTML=html;
-  // --- Na ---
-  const f= age>=65 ? (sex==='m'?0.5:0.45) : (sex==='m'?0.6:0.5);
-  const TBW=W*f, sna=num('x_na'), glu=num('x_glu'), tgt=num('x_tgt'), ods=$('x_ods').checked;
-  const nb=byId[$('x_nabase').value], nbn=num('x_nabn'), drop=Math.min(num('x_nadrop'), nb.vol*nbn), ncl=num('x_nacl'), nk=num('x_nak');
-  const bV=nb.vol*nbn, nV=bV-drop+20*ncl+20*nk;
-  const bNa=v(nb,'na')*nbn*(bV>0?(bV-drop)/bV:0), bK=v(nb,'k')*nbn*(bV>0?(bV-drop)/bV:0);
-  const NaK=bNa+bK+34*ncl+20*nk, c=nV>0?NaK/nV*1000:0, cNa=nV>0?(bNa+34*ncl)/nV*1000:0;
-  let h='';
-  if(!(W>0&&age>0)){ h='<div class="empty">年齢・体重を入力してください。</div>'; }
-  else if(!(sna>0)){ h=`<table class="tgt"><tr><td>体内総水分量</td><td>${fmt(TBW,1)} L（体重×${f}）</td></tr><tr><td>作った輸液</td><td>${fmt(nV,0)} mL・Na＋K濃度 <b>${fmt(c,0)} mEq/L</b>（Na ${fmt(cNa,0)}、NaCl約${fmt(cNa*58.44/10000,2)}%）</td></tr></table><div class="note">血清Naを入れると、補正量を計算します。</div>`; }
-  else{
-    const dL=(c-sna)/(TBW+1); const lim=ods?8:10;
-    const corr=glu>100? sna+1.6*(glu-100)/100 : null;
-    const rows=[];
-    rows.push(['体内総水分量',`${fmt(TBW,1)} L（体重×${f}）`]);
-    if(corr) rows.push(['高血糖の補正Na',`${fmt(corr,1)} mEq/L（血糖${fmt(glu,0)}mg/dL）${corr>=135?'。高血糖による見かけの低Na血症の可能性':''}`]);
-    rows.push(['作った輸液',`${fmt(nV,0)} mL・Na＋K濃度 <b>${fmt(c,0)} mEq/L</b>（Na ${fmt(cNa,0)}、NaCl約${fmt(cNa*58.44/10000,2)}%）`]);
-    rows.push(['輸液1Lあたりの変化',`<b>${dL>=0?'+':''}${fmt(dL,2)} mEq/L</b>（作った量 ${fmt(nV,0)}mLで ${dL>=0?'+':''}${fmt(dL*nV/1000,2)}）`]);
-    const W3=[];
-    if(sna<135){
-      if(tgt>lim) W3.push(`24時間で${tgt}mEq/Lは上限（${lim}mEq/L${ods?'：ODS高リスク':''}）を超えています`);
-      if(dL<=0) W3.push('この輸液ではNaは上がりません（輸液のNa＋K濃度が血清Naより低い）');
-      else{ const need=tgt/dL*1000; rows.push([`24時間で+${tgt}mEq/Lに必要な量`,`<b>約${fmt(need,0)} mL</b>（24時間で約${fmt(need/24,0)}mL/時）＝作った輸液の約${fmt(need/Math.max(nV,1),1)}倍`]);
-        rows.push(['上限の目安',`24時間で+${lim}mEq/Lまで（約${fmt(lim/dL*1000,0)}mL）`]); }
-      if(c>=300) W3.push('高張食塩液です。中心静脈または太い末梢静脈から輸液ポンプで投与し、血清Naを2〜4時間ごとに測定');
-      if(sna<=120) W3.push('重度の低Na血症。けいれん・意識障害など重い症状があれば、医師の判断で3%食塩液を少量ずつ投与する方法を検討');
-    } else if(sna>145){
-      const fwd=TBW*(sna/140-1);
-      rows.push(['自由水欠乏量',`<b>約${fmt(fwd*1000,0)} mL</b>`]);
-      if(dL>=0) W3.push('この輸液ではNaは下がりません（5%ブドウ糖などNaの少ない輸液を選択）');
-      else{ const need=tgt/(-dL)*1000; rows.push([`24時間で－${tgt}mEq/Lに必要な量`,`<b>約${fmt(need,0)} mL</b>（約${fmt(need/24,0)}mL/時）。不感蒸泄など喪失分は別に加算`]);
-        if(tgt>10) W3.push('24時間で10mEq/Lを超える低下は避ける'); }
-    } else rows.push(['判定','血清Naは基準範囲内です']);
-    h=`<table class="tgt">${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>${W3.map(w=>'<div class="warn">'+esc(w)+'</div>').join('')}
-      <p class="note" style="margin:6px 0 0">式は尿などからの喪失を含みません。水利尿が出ると急に上がりすぎることがあるため、血清Naを4〜6時間ごと（高張食塩液では2〜4時間ごと）に測定してください。</p>`;
-  }
-  $('naRes').innerHTML=h;
-  // --- P Mg Ca ---
-  const pn=num('x_pn'), mgn=num('x_mgn'), can=num('x_can');
-  $('x_pout').textContent=`P ${fmt(10*pn,1)}mmol（${fmt(310*pn,0)}mg）・Na ${fmt(15*pn,1)}mEq`+(W>0?`・${fmt(10*pn/W,2)}mmol/kg`:'');
-  $('x_mgout').textContent=`Mg ${fmt(20*mgn,1)}mEq（${fmt(10*mgn,1)}mmol・${fmt(243*mgn,0)}mg）`;
-  $('x_caout').textContent=`Ca ${fmt(1.95*can,2)}mEq（約${fmt(39*can,0)}mg）`;
 }
 
 </script>
