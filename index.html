@@ -754,6 +754,7 @@ function design(){
     <tr><td>たんぱく質・アミノ酸</td><td><b>${fmt(I.pr[0]*W,0)}〜${fmt(I.pr[1]*W,0)} g/日</b>（${I.pr[0]}〜${I.pr[1]}g/kg：${esc(I.pnote)}）</td></tr>
     <tr><td>水分</td><td><b>${fmt(fluid,0)} mL/日</b>${num('n_flmax')>0?'（上限を入力）':'（'+num('n_fl')+'mL/kg）'}</td></tr>
     <tr><td>糖の上限（輸液）</td><td>${fmt(I.gMax,0)} g/日（${I.gLim}mg/kg/分）</td></tr>
+    <tr><td>脂質</td><td><b>${fmt(E*0.2/9,0)}〜${fmt(E*0.3/9,0)} g/日</b>（熱量の20〜30％）<br><span class="note">脂肪乳剤は1.0g/kg/日以下（${fmt(W,0)}g）、0.1g/kg/時以下で投与</span></td></tr>
     <tr><td>NPC/N比の目安</td><td>${npcRange}</td></tr>
     ${I.renal!=='no'?`<tr><td>腎機能（${esc(RENAL_LABEL[I.renal])}）</td><td>食塩 ${esc(RR.saltNote)}<br>カリウム ${esc(RR.kNote)}${RR.pPerProt?`<br>リン ${fmt(pMax,0)}mg/日以下（たんぱく質×15）`:''}${RR.fluidNote?`<br>水分 ${esc(RR.fluidNote)}`:''}<br><span class="note">エネルギー ${esc(RR.eNote)}</span></td></tr>`:''}
     ${I.Estart?`<tr><td>リフィーディング症候群</td><td><span class="badge">${I.rf==='extreme'?'超高リスク':'高リスク'}</span> 開始量 <b>${fmt(I.Estart,0)} kcal/日</b>（${I.rf==='extreme'?5:10}kcal/kg）から4〜7日で目標へ<br>
@@ -791,7 +792,10 @@ function design(){
     ['水分 mL', fmt(fluid,0), fmt(te.water+flush,0)+(flush?'<div class="gen">うち白湯'+fmt(flush,0)+'</div>':''), fmt(ti.vol,0), '<b>'+fmt(tot.water,0)+'</b>', tot.water<fluid*0.9?J(0,'不足 '+fmt(fluid-tot.water,0)):tot.water>fluid*1.1?J(0,'過剰 '+fmt(tot.water-fluid,0)):J(1,'○')],
   ];
   if(ti.glu>0) rowsE.push(['糖（輸液）', I.gLim+'mg/kg/分以下', '－', fmt(ti.glu,0)+'g', fmt(gmk,1)+'mg/kg/分', gmk>I.gLim?J(0,'上限超え'):J(1,'○')]);
-  if(te.fat+ti.fat>0) rowsE.push(['脂肪 g', '－', fmt(te.fat,1), fmt(ti.fat,1), fmt(te.fat+ti.fat,1), ti.fat>0?(ivFatKg>1.0?J(0,'脂肪乳剤 1g/kg超'):J(1,'脂肪乳剤 '+fmt(ivFatKg,2)+'g/kg')):'']);
+  const fatTot=te.fat+ti.fat, fatPct=tot.kcal>0?fatTot*9/tot.kcal*100:0;
+  let fatJ= tot.kcal<=0?'': fatPct<20?J(0,fmt(fatPct,0)+'％（20％未満）'): fatPct>30?J(0,fmt(fatPct,0)+'％（30％超）'):J(1,'○ '+fmt(fatPct,0)+'％');
+  if(ti.fat>0) fatJ+='<div>'+(ivFatKg>1.0?J(0,'脂肪乳剤 1g/kg/日超'):J(1,'脂肪乳剤 '+fmt(ivFatKg,2)+'g/kg/日'))+'</div><div class="gen">0.1g/kg/時以下なら'+fmt(ti.fat/(0.1*W),1)+'時間以上</div>';
+  rowsE.push(['脂質 g', fmt(E*0.2/9,0)+'〜'+fmt(E*0.3/9,0)+'<div class="gen">熱量の20〜30％</div>', fmt(te.fat,1), fmt(ti.fat,1), fmt(fatTot,1), fatJ]);
   rowsE.push(['NPC/N比', npcRange.split('（')[0], '', '', fmt(npcn,0), '']);
   rowsE.push(['食塩相当量 g', saltMax?saltMax+'未満':'－', fmt(salt(te.na),1), fmt(salt(ivNaMg),1)+'<div class="gen">Na '+fmt(ti.na,0)+'mEq</div>', fmt(salt(tot.na),1), saltMax?(salt(tot.na)<saltMax?J(1,'○'):J(0,'超え')):'']);
   rowsE.push(['カリウム mg', kMax?fmt(kMax,0)+'以下':'－', fmt(te.k,0), fmt(ivKMg,0)+'<div class="gen">'+fmt(ti.k,0)+'mEq</div>', fmt(tot.k,0)+'<div class="gen">'+fmt(tot.k/39.1,1)+'mEq</div>', kMax?(tot.k<=kMax?J(1,'○'):J(0,'超え')):'']);
@@ -807,6 +811,8 @@ function design(){
   if(ivrows.some(r=>r.id==='hicaliq'&&r.qty>0)) Wn.push('ハイカリックRFはK・Pを含まず、ビタミンB1の併用が必要。総合ビタミン剤・微量元素製剤を追加し、K・Pは血清値を見て補正');
   if(ivrows.some(r=>byId[r.id].cv&&r.qty>0)) Wn.push('中心静脈専用製剤を含みます（中心静脈から投与）');
   if(ivrows.some(r=>r.id==='enefluid'&&r.qty>0)) Wn.push('エネフリードは脂肪を含むため、他の薬剤の混注・側管からの投与はしない（添付文書）');
+  if(ti.kcal>0 && fatTot===0) Wn.push('脂質が入っていません。静脈栄養が長く続く場合は、必須脂肪酸欠乏の予防に脂肪乳剤（イントラリポス）を検討（禁忌がなければ）');
+  if(erows.some(r=>r.id==='glurex'&&r.qty>0) && fatPct>30) Wn.push('グルセルナ-REXは糖質を抑えるため脂質の割合が高い設計です（脂質の割合が30％を超えるのは製品の特性）');
   if(I.dm && (te.kcal+ti.kcal)>0) Wn.push('糖尿病：血糖を測定し、必要に応じてインスリンを使用');
   const empty=!erows.length&&!ivrows.length&&!flush;
   $('evalBox').innerHTML=(empty?'<div class="note" style="margin-bottom:6px">経腸栄養・輸液を入力すると、ここで合計を評価します。何も入れずに「5．提案」を使うこともできます。</div>':'')+
