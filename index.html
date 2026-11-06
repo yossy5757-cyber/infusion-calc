@@ -95,6 +95,11 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
 @media (max-width:980px){.cols2{grid-template-columns:1fr;}}
 #printArea{display:none;}
 @media print{ body>*:not(#printArea){display:none !important;} #printArea{display:block;white-space:pre-wrap;font-family:"Yu Gothic","Meiryo",sans-serif;font-size:11pt;line-height:1.6;} }
+.pcard{border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:6px 0;background:#fff;}
+.pcard>summary{cursor:pointer;list-style:none;}
+.pcard>summary::-webkit-details-marker{display:none;}
+.pcard[open]{border-color:var(--navy);}
+#printArea td,#printArea th{border:1px solid #999;padding:2px 4px;text-align:left;vertical-align:top;}
 @media (max-width:600px){
   .tabs{padding:8px 8px 0;} .tab{flex:1;font-size:13px;padding:8px 6px;}
   .fgrid{grid-template-columns:1fr 1fr;}
@@ -132,6 +137,7 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
 <nav class="tabs">
   <button class="tab active" data-tab="calc">① 混合計算（糖濃度・浸透圧比）</button>
   <button class="tab" data-tab="nst">② 栄養設計（経腸＋輸液）</button>
+  <button class="tab" data-tab="list">③ 製剤一覧</button>
 </nav>
 <main id="tab-calc">
 <section>
@@ -344,6 +350,17 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
   <textarea id="copyArea" readonly style="display:none;width:100%;height:220px;margin-top:6px;font-size:13px"></textarea>
 </section>
 </main>
+<main id="tab-list" style="display:none">
+<section style="grid-column:1/-1">
+  <h2>当院採用の輸液・経腸栄養剤 一覧</h2>
+  <div class="addbar"><input type="search" id="l_q" placeholder="製品名・成分・特徴で検索（例：アミノ酸、腎、半固形、B1）" style="flex:1 1 260px"><button id="l_print">表示中の一覧を印刷</button></div>
+  <div class="examples" id="l_cats" style="margin:8px 0"></div>
+  <div id="l_count" class="note"></div>
+  <div id="l_box"></div>
+  <p class="note" style="margin-top:8px">数値は1袋（1本・1個）あたりです。出典は添付文書・メーカー資料（確認日：2026年11月）。「添付文書・製品情報」のリンクはインターネットに接続できるときだけ開けます。製品をタップすると詳しい内容が開きます。</p>
+</section>
+</main>
+
 
 
 <script>
@@ -547,8 +564,9 @@ render();
 // ====== タブ切り替え ======
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
-  ['calc','nst'].forEach(k=>document.getElementById('tab-'+k).style.display=t.dataset.tab===k?'':'none');
+  ['calc','nst','list'].forEach(k=>document.getElementById('tab-'+k).style.display=t.dataset.tab===k?'':'none');
   if(t.dataset.tab==='nst') design();
+  if(t.dataset.tab==='list') listRender();
 });
 
 // ====== NST投与設計 ======
@@ -1025,6 +1043,97 @@ function enCard(title,r,sub,T,Ed,W,ti,flush,fluid){
    <tr><td>水分（製品）</td><td class="num">${fmt(t.water,0)} mL</td><td class="ach"></td></tr>
    <tr><td>食塩 / K / P</td><td class="num">${fmt(salt,1)}g / ${fmt(t.k,0)} / ${fmt(t.p,0)}mg</td><td class="ach"></td></tr></table>
    <ul class="pnote">${notes.map(n=>'<li>'+esc(n)+'</li>').join('')}</ul>${applyBtn('en',r.items)}</div>`;
+}
+
+
+// ====== ③ 製剤一覧 ======
+const YJ={"glu5_20": "3231401A1094", "glu5_50": "3231401Q6043", "glu5_100": "3231401A2066", "glu5_250": "3231401J6029", "tglu5_500": "3231401Q3117", "glu20_20": "3231401H1254", "glu50_20": "3231401H7023", "glu50_200": "3231401J3038", "kylit_500": "3234400H2045", "sol1_200": "3319500A5060", "sol1_500": "3319500A3067", "sol3a_200": "3319510A5098", "sol3a_500": "3319510A4083", "solitaxh": "3319556A2023", "tmr": "3319538A4095", "veend": "3319551A4090", "veenf": "3319557A2044", "ns_50": "3311401H2059", "ns_100": "3311401A3111", "ns_250": "3311401H6038", "ns_500": "3311401A9020", "ns_1000": "3311401A8024", "bfluid": "3259529G1030", "enefluid": "3259537G2023", "elneo1": "3259533G1029", "elneo2": "3259534G1023", "hicaliq": "3239527A2032", "lip50": "3299505A6030", "lip100": "3299505A4045", "prote12": "3253401H4048", "amiparen": "3253406A5030", "neoamiyu": "3253415A1034", "aminol200": "3253404A3055", "aminol500": "3253404A4051", "kcl20": "3319402G4024", "aspk10": "3229401G1021", "nacl10": "3311400A1068", "phosna": "3319407A1025", "mgso4": "1244401A1069", "calcicol": "3213400A2047", "vitaject": "3179517G1035", "dvitamix": "3179503A1022", "alinF10": "3122401A2045", "fursul50": "3122401A4153", "pantol": "3133401A1042", "methyco": "3136403A1140", "vitc500": "3140400A4246", "k2n": "3160401A6041", "shizanarin": "3229501A1094", "aselend": "3229402A1023", "ensH": "3259114S1026", "enevo": "3259119S1029", "inolas": "3259120S1021", "twin": "3259117S1020", "elental": "3259103B1036", "aminoEN": "3259108B1039", "solitaT": "3229101D2035"};
+const LINKS={ensL:'https://www.kegg.jp/medicus-bin/search_drug?display=med&search_keyword='+encodeURIComponent('エンシュア'),racolL:'https://www.otsukakj.jp/med_nutrition/qa/dikj/product/000301.php',racolS:'https://www.kegg.jp/medicus-bin/japic_med_product?id=00062730',inosol:'https://www.kegg.jp/medicus-bin/japic_med_product?id=00071558',
+ czhi:'https://www.clinico.co.jp/products/liquid-food/cz-hi.html',mar2:'https://www.clinico.co.jp/products/liquid-food/ma-r2.html',renLP:'https://www.meiji.co.jp/meiji-nutrition-info/products/mhn/renalen/',renMP:'https://www.meiji.co.jp/meiji-nutrition-info/products/mhn/renalen/',glurex:'https://grx.jp/',
+ pg300:'https://www.nutri.co.jp/products/pgsoft/pg_1/index.html',pg400:'https://www.nutri.co.jp/products/pgsoft/pg_1/index.html',agal:'https://healthcare.kissei.co.jp/shop/g/g1002250/',isojel:'https://www.eiyounet.nestlehealthscience.jp/product_info/isocal-jelly-hc',procca:'https://www.nutri.co.jp/products/proca/'};
+const FEAT={
+ glu5_20:'等張のブドウ糖液。水分補給・薬剤の溶解に',glu5_50:'等張のブドウ糖液。水分補給・薬剤の溶解に',glu5_100:'等張のブドウ糖液。水分補給・薬剤の溶解に',glu5_250:'等張のブドウ糖液。水分補給・薬剤の溶解に',tglu5_500:'等張のブドウ糖液。水分補給・薬剤の溶解に',
+ glu20_20:'高張ブドウ糖液（20%）',glu50_20:'高張ブドウ糖液（50%）。低血糖の補正、輸液への糖の追加に',glu50_200:'高張ブドウ糖液（50%）。添付文書の用法は中心静脈内に持続点滴注入',
+ kylit_500:'キシリトール液。水分・エネルギーの補給',sol1_200:'開始液（1号液）。Kを含まない',sol1_500:'開始液（1号液）。Kを含まない',sol3a_200:'維持液（3号液）。1日の水分・電解質の維持に',sol3a_500:'維持液（3号液）。1日の水分・電解質の維持に',
+ solitaxh:'糖濃度12.5%の維持液（浸透圧比約3で末梢投与の上限付近）',tmr:'マルトース加乳酸リンゲル液。細胞外液の補充',veend:'ブドウ糖加酢酸リンゲル液。細胞外液の補充',veenf:'酢酸リンゲル液。細胞外液の補充',
+ ns_50:'細胞外液の補充、薬剤の溶解・希釈',ns_100:'細胞外液の補充、薬剤の溶解・希釈',ns_250:'細胞外液の補充、薬剤の溶解・希釈',ns_500:'細胞外液の補充、薬剤の溶解・希釈',ns_1000:'細胞外液の補充、薬剤の溶解・希釈',
+ bfluid:'末梢静脈栄養用。アミノ酸・糖・電解質・ビタミンB1を含む（脂肪・他のビタミン・微量元素は含まない）',enefluid:'末梢静脈栄養用。脂肪・水溶性ビタミンも含む。他剤の混注・側管投与はしない',
+ elneo1:'中心静脈栄養の開始用キット。総合ビタミン・微量元素を含む',elneo2:'中心静脈栄養の維持用キット。総合ビタミン・微量元素を含む',
+ hicaliq:'腎不全などで使う高カロリー輸液の基本液。K・Pを含まない。アミノ酸・ビタミン（B1必須）・微量元素を別に追加',
+ lip50:'脂肪乳剤。必須脂肪酸とエネルギーの補給。他剤と混合せず単独で、脂肪0.1g/kg/時以下',lip100:'脂肪乳剤。必須脂肪酸とエネルギーの補給。他剤と混合せず単独で、脂肪0.1g/kg/時以下',
+ prote12:'高濃度の総合アミノ酸（12%）。当院では中心静脈から投与',amiparen:'総合アミノ酸（10%）',neoamiyu:'腎不全用アミノ酸',aminol200:'肝性脳症改善アミノ酸（分岐鎖アミノ酸が多い）',aminol500:'肝性脳症改善アミノ酸（分岐鎖アミノ酸が多い）',
+ kcl20:'低K血症の補正。K濃度40mEq/L以下に希釈・20mEq/時以下・1日100mEq以下（添付文書）',aspk10:'低K血症の補正。K濃度40mEq/L以下に希釈・20mEq/時以下・1日100mEq以下（添付文書）',
+ nacl10:'Naの補正（1本Na 34mEq）。輸液に添加して使用',phosna:'リンの補正（1管P 10mmol・Na 15mEq）。Ca製剤との配合に注意',mgso4:'Mgの補正（1管Mg 20mEq）。必ず希釈',calcicol:'Caの補正（1本Ca 約1.95mEq）。リン酸塩・炭酸塩を含む液とは沈殿のおそれ',
+ ensL:'標準組成の経腸栄養剤（1.0kcal/mL）',ensH:'1.5kcal/mL。水分制限や少量で摂りたいときに',enevo:'1.2kcal/mL。たんぱく質がやや多め',racolL:'標準組成（1.0kcal/mL）',racolS:'半固形（胃瘻から注入）',inolas:'1.6kcal/mL。少量で高エネルギー',inosol:'半固形（胃瘻から注入）',
+ twin:'消化態（たんぱく質はペプチド）。消化吸収能が低下したときに',elental:'成分栄養剤（窒素源はアミノ酸、脂肪はほとんどない）',aminoEN:'肝不全用（肝性脳症を伴う慢性肝不全）。分岐鎖アミノ酸が多い',solitaT:'Na・Kの経口補給（脱水・術後回復期）。1包を水100mLに溶解',
+ czhi:'標準組成の流動食（1.0kcal/mL）',mar2:'2.0kcal/mL。少量で高エネルギー',renLP:'腎疾患向け・低たんぱく（1本2g）。K・P控えめ',renMP:'腎疾患向け（たんぱく質1本7g）。K・P控えめ',glurex:'糖尿病向け。糖質控えめ・脂質多め',
+ pg300:'半固形（胃瘻から注入）1.5kcal/g',pg400:'半固形（胃瘻から注入）1.5kcal/g',agal:'たんぱく質0のエネルギー補給ゼリー（経口）',isojel:'えん下困難者用ゼリー（経口）',procca:'たんぱく質・亜鉛・Ca補給ゼリー（経口）'};
+const LCATS=[['all','すべて'],['base','基本輸液'],['pn','栄養輸液'],['amfat','アミノ酸・脂肪'],['ele','電解質補正'],['vit','ビタミン・微量元素'],['endrug','経腸栄養剤（医薬品）'],['enfood','流動食（食品）'],['sup','補助食品']];
+function lcatOfDrug(d){ return (d.cat==='糖液'||d.cat==='電解質輸液')?'base': d.cat.startsWith('栄養輸液')||d.cat.startsWith('高カロリー')?'pn': (d.cat==='アミノ酸製剤'||d.cat.startsWith('脂肪'))?'amfat': d.cat==='電解質補正液'?'ele':'vit'; }
+const LIST=[].concat(
+  DRUGS.map(d=>({src:'iv',id:d.id,lc:lcatOfDrug(d),name:d.name,spec:d.spec,gen:d.gen||'',d})),
+  ENTERAL.filter(e=>e.id!=='water').map(e=>({src:'en',id:e.id,lc:e.cat==='drug'?'endrug':e.cat==='food'?'enfood':'sup',name:e.name,spec:e.pkg+e.unit,gen:e.tag||'',d:e})));
+let lcat='all';
+(function initList(){
+  $('l_cats').innerHTML=LCATS.map(([k,l])=>`<button class="small ${k==='all'?'primary':''}" data-lc="${k}">${l}</button>`).join('');
+  $('l_cats').querySelectorAll('[data-lc]').forEach(b=>b.onclick=()=>{lcat=b.dataset.lc; $('l_cats').querySelectorAll('[data-lc]').forEach(x=>x.classList.toggle('primary',x===b)); listRender();});
+  $('l_q').addEventListener('input',listRender);
+  $('l_print').onclick=()=>{ $('printArea').innerHTML=listPrintHTML(); window.print(); };
+})();
+function lsum(x){ // 1行の要約
+  const d=x.d;
+  if(x.src==='iv'){ const p=[]; p.push(d.vol+'mL'); if(v(d,'kcal')>=1) p.push(fmt(v(d,'kcal'),0)+'kcal'); if(v(d,'glu')>0&&d.vol>=50) p.push('糖'+fmt(v(d,'glu')/d.vol*100,1)+'%'); if(v(d,'aa')>0) p.push('アミノ酸'+fmt(v(d,'aa'),1)+'g'); if(v(d,'fat')>0) p.push('脂肪'+fmt(v(d,'fat'),0)+'g'); if(v(d,'na')>0||v(d,'k')>0) p.push(v(d,'k')>0?'Na'+fmt(v(d,'na'),1)+'・K'+fmt(v(d,'k'),1)+'mEq':'Na'+fmt(v(d,'na'),1)+'mEq'); if(d.vit) p.push(d.vit); p.push('浸透圧比'+(d.osm||'－')); return p.join('・'); }
+  const p=[d.pkg+d.unit, d.kcal+'kcal', 'たんぱく'+d.pro+'g']; if(d.osm) p.push(d.osm+'mOsm/L'); return p.join('・');
+}
+function ldetail(x){
+  const d=x.d, R=[];
+  if(x.src==='iv'){
+    R.push(['一般名・分類',esc(d.gen||'')+'（'+esc(d.cat)+'）']); R.push(['液量',d.vol+' mL']);
+    if(v(d,'kcal')>0) R.push(['熱量',fmt(v(d,'kcal'),1)+' kcal']);
+    if(v(d,'glu')>0) R.push(['ブドウ糖',fmt(v(d,'glu'),1)+' g（'+fmt(v(d,'glu')/d.vol*100,1)+'%）']);
+    if(v(d,'sug')>0) R.push([esc(d.sugName||'糖'),fmt(v(d,'sug'),1)+' g']);
+    if(v(d,'aa')>0) R.push(['アミノ酸',fmt(v(d,'aa'),2)+' g']);
+    if(v(d,'fat')>0) R.push(['脂肪',fmt(v(d,'fat'),1)+' g']);
+    if(v(d,'na')>0||v(d,'k')>0) R.push(['Na / K',fmt(v(d,'na'),1)+' / '+fmt(v(d,'k'),1)+' mEq']);
+    if(d.extra){ const e=d.extra, t=[]; if(e.ca) t.push('Ca '+e.ca+'mEq'); if(e.mg) t.push('Mg '+e.mg+'mEq'); if(e.p) t.push('P '+e.p+'mmol'); if(t.length) R.push(['その他',t.join('、')]); }
+    if(d.vit) R.push(['主な成分',esc(d.vit)]);
+    R.push(['浸透圧比',(d.osm||'－')+(d.osm>3?'（3を超えるため末梢投与は避ける目安）':'')]);
+    R.push(['投与経路',d.cv?'<b>中心静脈</b>':d.sep?'単独ルート（他剤と混合しない）':d.additive?'輸液に添加':'末梢・中心静脈']);
+    if(d.note) R.push(['注意',esc(d.note)]);
+  } else {
+    R.push(['区分',CAT[d.cat]+(d.cat==='drug'?'（薬価収載・処方）':'（食品・入院中は食事扱い）')]);
+    R.push(['1個',d.pkg+d.unit+(d.dil?'（溶解水 '+d.dil+'mL）':'')]); R.push(['熱量',d.kcal+' kcal']);
+    R.push(['たんぱく質 / 脂質 / 炭水化物',d.pro+' / '+d.fat+' / '+d.cho+' g']);
+    R.push(['水分',d.dil?'溶かす水の量による':(d.est?'約':'')+d.water+' mL']);
+    R.push(['Na / K / P',d.na+' / '+d.k+' / '+d.p+' mg（食塩 '+fmt(d.na*2.54/1000,2)+'g）']);
+    if(d.osm) R.push(['浸透圧',d.osm+' mOsm/L']);
+    R.push(['形状・投与',{liquid:'液体（経口・経管）',semi:'半固形（胃瘻から注入）',powder:'粉末（溶解して使用）',jelly:'ゼリー（経口）'}[d.form]||'']);
+  }
+  const link= x.src==='iv'||x.d.cat==='drug' ? (YJ[x.id]?'https://www.pmda.go.jp/PmdaSearch/iyakuDetail/GeneralList/'+YJ[x.id]:LINKS[x.id]) : LINKS[x.id];
+  return `<p style="margin:4px 0 6px"><b>特徴：</b>${esc(FEAT[x.id]||x.gen)}</p><table class="tgt">${R.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
+    <div class="examples" style="margin-top:6px"><button class="small primary" data-ladd="${x.src}:${x.id}">②の${x.src==='iv'?'輸液':'経腸栄養'}に追加</button>${link?`<a class="small" href="${link}" target="_blank" rel="noopener" style="align-self:center">${x.src==='iv'||x.d.cat==='drug'?'添付文書・製品情報（PMDAほか）':'メーカーの製品情報'} ↗</a>`:''}</div>`;
+}
+function lfilter(){
+  const q=$('l_q').value.trim().toLowerCase();
+  return LIST.filter(x=>(lcat==='all'||x.lc===lcat)&&(!q||(x.name+x.spec+x.gen+(FEAT[x.id]||'')+(x.d.vit||'')+(x.d.cat||'')).toLowerCase().includes(q)));
+}
+function listRender(){
+  const L=lfilter();
+  $('l_count').textContent=L.length+'件';
+  $('l_box').innerHTML=L.map(x=>`<details class="pcard"><summary><b>${esc(x.name)}</b> ${esc(x.spec)} <span class="tag ${x.src==='en'&&x.d.cat==='drug'?'b':''}">${esc(LCATS.find(c=>c[0]===x.lc)[1])}</span>${x.d.cv?'<span class="tag">中心静脈</span>':''}<div class="gen">${esc(lsum(x))}</div></summary>${ldetail(x)}</details>`).join('')||'<div class="empty">該当する製品がありません。</div>';
+  $('l_box').querySelectorAll('[data-ladd]').forEach(b=>b.onclick=()=>{
+    const [src,id]=b.dataset.ladd.split(':');
+    if(src==='iv'){ const ex=ivrows.find(r=>r.id===id); if(ex) ex.qty+=1; else ivrows.push({id,qty:1}); }
+    else { const ex=erows.find(r=>r.id===id); if(ex) ex.qty+=1; else erows.push({id,qty:1,dil:enBy[id].dil||0}); }
+    document.querySelector('.tab[data-tab=nst]').click(); window.scrollTo(0,0);
+  });
+}
+function listPrintHTML(){
+  const L=lfilter();
+  return `<div style="white-space:normal"><h3 style="margin:0 0 6px">当院採用の輸液・経腸栄養剤 一覧（${LCATS.find(c=>c[0]===lcat)[1]}・${L.length}件）</h3>
+   <table style="border-collapse:collapse;width:100%;font-size:8.5pt">${'<tr><th>製品</th><th>規格</th><th>主な内容（1袋・1個あたり）</th><th>特徴</th></tr>'}
+   ${L.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.spec)}</td><td>${esc(lsum(x))}</td><td>${esc(FEAT[x.id]||x.gen)}</td></tr>`).join('')}</table>
+   <p style="font-size:8pt">出典：添付文書・メーカー資料（2026年11月確認）。輸液計算・NST投与設計ツール（薬剤科）</p></div>`;
 }
 
 </script>
