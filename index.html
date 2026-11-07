@@ -102,15 +102,18 @@ legend{color:var(--navy);font-weight:700;font-size:14px;padding:0 4px;}
 #printArea td,#printArea th{border:1px solid #999;padding:2px 4px;text-align:left;vertical-align:top;}
 #tblModal{position:fixed;inset:0;background:#fff;z-index:1000;display:flex;flex-direction:column;}
 #tblModal .tm-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:2px solid var(--navy);background:#eef3fa;flex-wrap:wrap;}
-#tblModal .tm-body{overflow:auto;padding:8px 12px;flex:1;}
+#tblModal .tm-body{overflow:auto;padding:0 0 8px;flex:1;}
+#tblModal .tm-body>p{padding:0 12px;}
 table.ctbl{border-collapse:collapse;font-size:12px;white-space:nowrap;}
 table.ctbl th,table.ctbl td{border:1px solid #b9c3d3;padding:3px 6px;}
 table.ctbl th{background:var(--navy);color:#fff;position:sticky;top:0;z-index:1;}
 table.ctbl td.n{text-align:right;}
 table.ctbl tr.grp td{background:#dde6f3;font-weight:700;}
 table.ctbl td.f{white-space:normal;min-width:220px;}
-table.ctbl td:first-child{position:sticky;left:0;background:#fff;}
-table.ctbl tr.grp td:first-child{background:#dde6f3;}
+table.ctbl tr:not(.grp)>td:first-child{position:sticky;left:0;background:#fff;white-space:normal;overflow-wrap:anywhere;min-width:7em;max-width:11em;box-shadow:2px 0 0 #b9c3d3,-10px 0 0 #fff;}
+table.ctbl th:first-child{position:sticky;left:0;z-index:2;}
+@media (max-width:600px){ table.ctbl tr:not(.grp)>td:first-child{min-width:5.5em;max-width:6.5em;font-size:11px;line-height:1.3;} }
+table.ctbl tr.grp td span{position:sticky;left:6px;}
 @media (max-width:600px){
   .tabs{padding:8px 8px 0;} .tab{flex:1;font-size:13px;padding:8px 6px;}
   .fgrid{grid-template-columns:1fr 1fr;}
@@ -1157,14 +1160,14 @@ function ctblHTML(kind){
   if(kind==='iv'){
     const groups=[...new Set(DRUGS.map(d=>d.cat))];
     let h='<table class="ctbl"><tr><th>製品名</th><th>規格</th><th>液量<br>mL</th><th>熱量<br>kcal</th><th>糖<br>g</th><th>糖濃度<br>%</th><th>アミノ酸<br>g</th><th>脂肪<br>g</th><th>Na<br>mEq</th><th>K<br>mEq</th><th>Ca<br>mEq</th><th>Mg<br>mEq</th><th>P<br>mmol</th><th>浸透圧比</th><th>経路</th><th>特徴・主な成分</th></tr>';
-    groups.forEach(g=>{ h+=`<tr class="grp"><td colspan="16">${esc(g)}</td></tr>`;
+    groups.forEach(g=>{ h+=`<tr class="grp"><td colspan="16"><span>${esc(g)}</span></td></tr>`;
       DRUGS.filter(d=>d.cat===g).forEach(d=>{ const e=d.extra||{}, sug=v(d,'glu')+v(d,'sug');
         h+=`<tr><td>${esc(d.name)}</td><td>${esc(d.spec)}</td><td class="n">${d.vol}</td><td class="n">${N(v(d,'kcal'),0)}</td><td class="n">${N(sug,1)}</td><td class="n">${sug&&d.vol>=50?fmt(sug/d.vol*100,1):'－'}</td><td class="n">${N(v(d,'aa'),2)}</td><td class="n">${N(v(d,'fat'),1)}</td><td class="n">${N(v(d,'na'),1)}</td><td class="n">${N(v(d,'k'),1)}</td><td class="n">${N(e.ca,2)}</td><td class="n">${N(e.mg,1)}</td><td class="n">${N(e.p,1)}</td><td class="n">${d.osm||'－'}</td><td>${d.cv?'中心静脈':d.sep?'単独':d.additive?'添加':'末梢可'}</td><td class="f">${esc((FEAT[d.id]||d.gen||'')+(d.vit?'（'+d.vit+'）':''))}</td></tr>`; }); });
     return h+'</table>';
   }
   const groups=[['drug','医薬品（経腸栄養剤など）'],['food','食品（流動食）'],['sup','栄養補助食品（経口）']];
   let h='<table class="ctbl"><tr><th>製品名</th><th>形状</th><th>1個</th><th>熱量<br>kcal</th><th>濃度</th><th>たんぱく質<br>g</th><th>脂質<br>g</th><th>炭水化物<br>g</th><th>水分<br>mL</th><th>Na<br>mg</th><th>K<br>mg</th><th>P<br>mg</th><th>食塩<br>g</th><th>浸透圧<br>mOsm/L</th><th>特徴</th></tr>';
-  groups.forEach(([c,lb])=>{ h+=`<tr class="grp"><td colspan="15">${lb}</td></tr>`;
+  groups.forEach(([c,lb])=>{ h+=`<tr class="grp"><td colspan="15"><span>${lb}</span></td></tr>`;
     ENTERAL.filter(d=>d.cat===c&&d.id!=='water').forEach(d=>{
       const conc=d.form==='powder'?'溶解による':d.unit==='g'?fmt(d.kcal/d.pkg,1)+'kcal/g':fmt(d.kcal/d.pkg,1)+'kcal/mL';
       h+=`<tr><td>${esc(d.name)}</td><td>${({liquid:'液体',semi:'半固形',powder:'粉末',jelly:'ゼリー'})[d.form]||''}</td><td class="n">${d.pkg}${d.unit}</td><td class="n">${d.kcal}</td><td class="n">${conc}</td><td class="n">${d.pro}</td><td class="n">${d.fat}</td><td class="n">${d.cho}</td><td class="n">${d.dil?'溶解水'+d.dil:(d.est?'約':'')+d.water}</td><td class="n">${fmt(d.na,0)}</td><td class="n">${fmt(d.k,0)}</td><td class="n">${fmt(d.p,0)}</td><td class="n">${fmt(d.na*2.54/1000,2)}</td><td class="n">${d.osm||'－'}</td><td class="f">${esc(FEAT[d.id]||d.tag)}</td></tr>`; }); });
@@ -1178,7 +1181,7 @@ document.querySelectorAll('[data-tbl]').forEach(b=>b.onclick=()=>{ tmKind=b.data
 $('tmClose').onclick=()=>{ $('tblModal').style.display='none'; document.body.style.overflow=''; };
 $('tmPrint').onclick=()=>{
   $('printArea').innerHTML='<div style="white-space:normal"><h3 style="margin:0 0 6px">'+esc($('tmTitle').textContent)+'</h3>'+ctblHTML(tmKind).replace('class="ctbl"','class="ctbl" style="font-size:7.5pt;white-space:normal"')+'<p style="font-size:7.5pt">出典：各添付文書・メーカー資料（2026年11月確認）。輸液計算・NST投与設計ツール（薬剤科）</p></div>';
-  const st=document.createElement('style'); st.id='landscapePrint'; st.textContent='@page{size:A4 landscape;margin:8mm} #printArea table.ctbl th{position:static;color:#000;background:#dde6f3} #printArea table.ctbl td:first-child{position:static;white-space:nowrap} #printArea table.ctbl td.n{white-space:nowrap} #printArea table.ctbl td.f{min-width:0}';
+  const st=document.createElement('style'); st.id='landscapePrint'; st.textContent='@page{size:A4 landscape;margin:8mm} #printArea table.ctbl th{position:static;color:#000;background:#dde6f3} #printArea table.ctbl td:first-child{position:static !important;white-space:nowrap;max-width:none;box-shadow:none} #printArea table.ctbl tr.grp td span{position:static} #printArea table.ctbl td.n{white-space:nowrap} #printArea table.ctbl td.f{min-width:0}';
   document.head.appendChild(st); $('tblModal').style.display='none';
   window.print();
   setTimeout(()=>{ st.remove(); $('tblModal').style.display='flex'; },500);
