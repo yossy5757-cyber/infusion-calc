@@ -44,6 +44,9 @@ td.num{text-align:right;white-space:nowrap;}
 .judge .big{font-size:22px;font-weight:700;margin:2px 0 4px;}
 .judge.peri{border-color:var(--blue);} .judge.peri .big{color:var(--blue);}
 .judge.cv{border-color:var(--red);} .judge.cv .big{color:var(--red);}
+.judge.caution{border-color:#c98a00;background:#fffaf0;} .judge.caution .big{color:#a86f00;}
+#cfgPanel{border:1.5px dashed var(--line);border-radius:6px;padding:8px 10px;margin-top:8px;font-size:14px;}
+#cfgPanel input[type=number]{width:70px;}
 .judge ul{margin:4px 0 0 18px;padding:0;font-size:14px;}
 .mix{border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:14.5px;}
 .mix b{color:var(--navy);}
@@ -194,7 +197,8 @@ table.ctbl tr.grp td span{position:sticky;left:6px;}
     <div class="note">
       ・<b>糖濃度</b>＝ブドウ糖の合計(g)÷総液量(mL)×100。マルトース・キシリトールは「その他の糖質」として別に表示します。<br>
       ・<b>浸透圧比（推定）</b>＝各薬剤の浸透圧比（添付文書の「約」の値）を液量で按分した概算です（Σ液量×浸透圧比÷総液量）。実測値とは異なることがあります。<br>
-      ・<b>末梢の目安</b>：浸透圧比 3以下 かつ 糖濃度 12.5％以下。浸透圧比約3が末梢静脈から投与できる限界とされています（PMDA医療安全情報No.67、静脈経腸栄養ガイドライン第3版）。<br>
+      ・<b>末梢の目安</b>：浸透圧比 3以下 かつ 糖濃度 12.5％以下（PMDA医療安全情報No.67、静脈経腸栄養ガイドライン第3版では浸透圧比約3が末梢静脈から投与できる限界とされています）。<br>
+      ・<b>当院の判定（初期値）</b>：浸透圧比 3以下は「末梢可」、3を超え4以下は「注意して末梢可」（静脈炎に注意し、太い末梢静脈・刺入部の観察などを行う）、4を超えると「中心静脈」。浸透圧比は推定値のため、3をわずかに超えただけで中心静脈と判定しないための運用です。基準値は下の「判定基準の設定（管理者用）」で変更できます。<br>
       ・大塚糖液50％の浸透圧比は、添付文書は約11、PMDA医療安全情報No.67は約12です。安全側の<b>12</b>で計算しています。<br>
       ・プロテアミン12は浸透圧比 約5のため末梢の目安を超えますが、PMDA医療安全情報では「濃度や用量で投与経路を変える必要がある輸液」に分類されています。当院では中心静脈専用製剤として扱います。<br>
       ・カリウム濃度は KCL・アスパラギン酸カリウム製剤の添付文書の「40mEq/L以下に希釈」、投与速度は「20mEq/hr以下」を目安に警告します。<br>
@@ -207,6 +211,16 @@ table.ctbl tr.grp td span{position:sticky;left:6px;}
 <section>
   <h2>2．計算結果</h2>
   <div id="result"><div class="empty">左で薬剤を追加すると、ここに結果が出ます。</div></div>
+  <div style="margin-top:8px"><button class="small" id="cfgOpen">判定基準の設定（管理者用）</button> <span id="cfgNow" class="note"></span></div>
+  <div id="cfgPanel" style="display:none">
+    <div class="fgrid">
+      <label>末梢可の上限（浸透圧比）<input type="number" id="cfg_osm1" step="0.1" min="1" max="10"></label>
+      <label>注意して末梢可の上限（浸透圧比）<input type="number" id="cfg_osm2" step="0.1" min="1" max="10"></label>
+      <label>糖濃度の上限（％）<input type="number" id="cfg_glu" step="0.5" min="5" max="50"></label>
+    </div>
+    <div class="examples" style="margin-top:6px"><button class="small primary" id="cfgSave">この端末に保存</button><button class="small" id="cfgReset">初期値に戻す（3・4・12.5）</button><button class="small" id="cfgClose">閉じる</button></div>
+    <p class="note" style="margin:4px 0 0">変更はこの端末（ブラウザ）だけに保存されます。全員の基準を変える場合は、ツール本体の初期値を変更してください。中心静脈専用製剤（エルネオパNF、ハイカリックRFなど）は、浸透圧比にかかわらず中心静脈と判定します。</p>
+  </div>
 </section>
 
 <section style="grid-column:1/-1">
@@ -483,6 +497,14 @@ document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{
 });
 ['wt','hr'].forEach(i=>document.getElementById(i).oninput=renderResult);
 
+// ====== 判定基準（管理者用設定） ======
+const CFG_DEFAULT={osm1:3, osm2:4, glu:12.5};
+const CFG_PASS_HASH=920930819; // パスワードのハッシュ（誤操作防止用）
+function fnv(str){ let h=0x811c9dc5; for(const ch of str){ h^=ch.codePointAt(0); h=Math.imul(h,0x01000193)>>>0; } return h; }
+let CFG=Object.assign({},CFG_DEFAULT);
+try{ const sv=JSON.parse(localStorage.getItem('infcalc_cfg')||'null'); if(sv&&sv.osm1>0&&sv.osm2>=sv.osm1&&sv.glu>0) CFG=sv; }catch(e){}
+function cfgShow(){ const def=CFG.osm1===CFG_DEFAULT.osm1&&CFG.osm2===CFG_DEFAULT.osm2&&CFG.glu===CFG_DEFAULT.glu;
+  document.getElementById('cfgNow').textContent='現在の基準：浸透圧比 '+CFG.osm1+'以下 末梢可／'+CFG.osm2+'以下 注意して末梢／糖 '+CFG.glu+'％以下'+(def?'（初期値）':'（この端末で変更中）'); }
 function rowInfo(r){
   if(r.custom){const c=r.custom; return {name:c.name,gen:'手入力',ml:c.vol*r.qty,glu:c.glu*r.qty,sug:0,aa:0,fat:0,na:0,k:0,kcal:c.glu*4*r.qty,osm:c.osm,cv:false,custom:true};}
   const d=byId[r.id]; const q=r.qty;
@@ -516,14 +538,17 @@ function renderResult(){
 
   // 判定
   const reasons=[]; let cls,big;
-  const osmOver=OSM>3, gluOver=gPct>12.5;
+  const C=CFG;
+  const osmOver=OSM>C.osm2, osmCaution=OSM>C.osm1&&!osmOver, gluOver=gPct>C.glu;
   if(hasCV) reasons.push('中心静脈専用製剤を含む（'+cvNames.join('、')+'）');
-  reasons.push('浸透圧比（推定）'+fmt(OSM,2)+(osmOver?' ＞ 3（末梢の目安を超える）':' ≦ 3'));
-  reasons.push('糖濃度 '+fmt(gPct,1)+'％'+(gluOver?' ＞ 12.5％（末梢の目安を超える）':' ≦ 12.5％'));
+  reasons.push('浸透圧比（推定）'+fmt(OSM,2)+(osmOver?' ＞ '+C.osm2+'（中心静脈の基準）':osmCaution?'（'+C.osm1+'を超え'+C.osm2+'以下：注意して末梢）':' ≦ '+C.osm1));
+  reasons.push('糖濃度 '+fmt(gPct,1)+'％'+(gluOver?' ＞ '+C.glu+'％（末梢の目安を超える）':' ≦ '+C.glu+'％'));
   if(hasCV||osmOver||gluOver){cls='cv';big='中心静脈から投与';
     if(hasCV && !osmOver && !gluOver) reasons.push('混ぜた後の濃度は目安内ですが、製剤が中心静脈専用のため中心静脈から投与（PMDA医療安全情報No.67・添付文書）');}
+  else if(osmCaution){cls='caution';big='末梢から投与可（注意）';
+    reasons.push('静脈炎のリスクが高くなります。太い末梢静脈を選び、刺入部（発赤・腫脹・疼痛）を観察。長期化する場合は中心静脈を検討');}
   else {cls='peri';big='末梢から投与可（目安内）';
-    if(OSM>2.7) reasons.push('上限（3）に近いので、これ以上濃くしない');}
+    if(OSM>C.osm1-0.3) reasons.push('上限（'+C.osm1+'）に近いので、これ以上濃くしない');}
 
   // 無菌調製
   let mixHtml;
@@ -541,7 +566,7 @@ function renderResult(){
     W.push('リン酸塩とカルシウム・マグネシウムが同じ袋に入っています。沈殿のおそれがあるため、配合変化を確認してください');
   if(xs.some(x=>x.d&&x.d.sep) && nItems>=2) W.push('イントラリポス（脂肪乳剤）は他の輸液と混合せず、単独で投与してください（計算上の合計として表示しています）');
   if(xs.some(x=>x.d&&x.d.id==='hicaliq')) W.push('ハイカリックRF：ビタミンB1の併用が必要。カリウム・リンを含みません');
-  if(OSM>3 && OSM<=3.3 && !hasCV) W.push('浸透圧比（推定）が3をわずかに超えています。浸透圧比 約3の輸液（ソリタックス-H、ビーフリードなど）は少量の追加でも3を超える計算になります。推定値のため、薬剤師が判断してください');
+  if(OSM>CFG.osm1 && OSM<=CFG.osm2 && !hasCV) W.push('浸透圧比（推定）が'+CFG.osm1+'を超えています（'+fmt(OSM,2)+'）。浸透圧比 約3の輸液（ソリタックス-H、ビーフリードなど）は少量の追加でも3を超える計算になります。推定値のため、薬剤師が判断してください');
   if(xs.some(x=>x.custom)) W.push('手入力の薬剤は、入力した糖量・浸透圧比で計算しています');
   const wt=Number(document.getElementById('wt').value), hr=Number(document.getElementById('hr').value);
   let rateHtml='';
@@ -562,9 +587,9 @@ function renderResult(){
    <div class="mix">${mixHtml}</div>
    <div class="res-grid">
      <div class="res-item key"><div class="k">総液量</div><div class="v">${fmt(V,1)} <small>mL</small></div></div>
-     <div class="res-item key"><div class="k">浸透圧比（推定）</div><div class="v">${fmt(OSM,2)}</div><div class="note">目安：3以下で末梢可</div></div>
+     <div class="res-item key"><div class="k">浸透圧比（推定）</div><div class="v">${fmt(OSM,2)}</div><div class="note">目安：${CFG.osm1}以下で末梢可、${CFG.osm2}以下は注意して末梢</div></div>
      <div class="res-item key"><div class="k">ブドウ糖</div><div class="v">${fmt(G,1)} <small>g</small></div></div>
-     <div class="res-item key"><div class="k">糖濃度（ブドウ糖）</div><div class="v">${fmt(gPct,1)} <small>％</small></div><div class="note">目安：12.5％以下で末梢可</div></div>
+     <div class="res-item key"><div class="k">糖濃度（ブドウ糖）</div><div class="v">${fmt(gPct,1)} <small>％</small></div><div class="note">目安：${CFG.glu}％以下で末梢可</div></div>
      ${SG>0?`<div class="res-item"><div class="k">その他の糖質</div><div class="v">${fmt(SG,1)} <small>g</small></div><div class="note">${esc([...new Set(xs.filter(x=>x.sug>0).map(x=>x.d.sugName))].join('・'))}（${fmt(SG/V*100,1)}％）</div></div>`:''}
      <div class="res-item"><div class="k">総熱量</div><div class="v">${fmt(KC,0)} <small>kcal</small></div>${AA>0?`<div class="note">非蛋白熱量 ${fmt(NPC,0)} kcal</div>`:''}</div>
      ${AA>0?`<div class="res-item"><div class="k">アミノ酸</div><div class="v">${fmt(AA,1)} <small>g</small></div></div>`:''}
@@ -577,6 +602,25 @@ function renderResult(){
    <p class="note" style="margin-top:8px">浸透圧比は添付文書の「約」の値を液量で按分した概算です。投与経路・調製場所の最終判断は薬剤師が行ってください。</p>`;
 }
 render();
+(function(){
+  cfgShow();
+  document.getElementById('cfgOpen').onclick=()=>{
+    if(document.getElementById('cfgPanel').style.display!=='none'){ document.getElementById('cfgPanel').style.display='none'; return; }
+    const pw=prompt('判定基準を変更するにはパスワードを入力してください');
+    if(pw===null) return;
+    if(fnv('infcalc:'+pw)!==CFG_PASS_HASH){ alert('パスワードが違います'); return; }
+    document.getElementById('cfg_osm1').value=CFG.osm1; document.getElementById('cfg_osm2').value=CFG.osm2; document.getElementById('cfg_glu').value=CFG.glu; document.getElementById('cfgPanel').style.display='';
+  };
+  document.getElementById('cfgSave').onclick=()=>{
+    const o1=parseFloat(document.getElementById('cfg_osm1').value), o2=parseFloat(document.getElementById('cfg_osm2').value), g=parseFloat(document.getElementById('cfg_glu').value);
+    if(!(o1>0&&o2>=o1&&g>0)){ alert('値を確認してください（注意して末梢可の上限は、末梢可の上限以上）'); return; }
+    CFG={osm1:o1,osm2:o2,glu:g}; try{ localStorage.setItem('infcalc_cfg',JSON.stringify(CFG)); }catch(e){}
+    cfgShow(); render(); document.getElementById('cfgPanel').style.display='none';
+  };
+  document.getElementById('cfgReset').onclick=()=>{ CFG=Object.assign({},CFG_DEFAULT); try{ localStorage.removeItem('infcalc_cfg'); }catch(e){}
+    document.getElementById('cfg_osm1').value=CFG.osm1; document.getElementById('cfg_osm2').value=CFG.osm2; document.getElementById('cfg_glu').value=CFG.glu; cfgShow(); render(); };
+  document.getElementById('cfgClose').onclick=()=>{ document.getElementById('cfgPanel').style.display='none'; };
+})();
 
 // ====== タブ切り替え ======
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
@@ -1114,7 +1158,7 @@ function ldetail(x){
     if(v(d,'na')>0||v(d,'k')>0) R.push(['Na / K',fmt(v(d,'na'),1)+' / '+fmt(v(d,'k'),1)+' mEq']);
     if(d.extra){ const e=d.extra, t=[]; if(e.ca) t.push('Ca '+e.ca+'mEq'); if(e.mg) t.push('Mg '+e.mg+'mEq'); if(e.p) t.push('P '+e.p+'mmol'); if(t.length) R.push(['その他',t.join('、')]); }
     if(d.vit) R.push(['主な成分',esc(d.vit)]);
-    R.push(['浸透圧比',(d.osm||'－')+(d.osm>3?'（3を超えるため末梢投与は避ける目安）':'')]);
+    R.push(['浸透圧比',(d.osm||'－')+(d.osm>CFG.osm2?'（'+CFG.osm2+'を超えるため中心静脈の目安）':d.osm>CFG.osm1?'（'+CFG.osm1+'を超えるため注意して末梢）':'')]);
     R.push(['投与経路',d.cv?'<b>中心静脈</b>':d.sep?'単独ルート（他剤と混合しない）':d.additive?'輸液に添加':'末梢・中心静脈']);
     if(d.note) R.push(['注意',esc(d.note)]);
   } else {
