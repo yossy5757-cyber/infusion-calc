@@ -499,7 +499,7 @@ document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{
 
 // ====== 判定基準（管理者用設定） ======
 const CFG_DEFAULT={osm1:3, osm2:4, glu:12.5};
-const CFG_PASS_HASH=920930819; // パスワードのハッシュ（誤操作防止用）
+const CFG_PASS_HASH=3311032702; // パスワードのハッシュ（誤操作防止用）
 function fnv(str){ let h=0x811c9dc5; for(const ch of str){ h^=ch.codePointAt(0); h=Math.imul(h,0x01000193)>>>0; } return h; }
 let CFG=Object.assign({},CFG_DEFAULT);
 try{ const sv=JSON.parse(localStorage.getItem('infcalc_cfg')||'null'); if(sv&&sv.osm1>0&&sv.osm2>=sv.osm1&&sv.glu>0) CFG=sv; }catch(e){}
